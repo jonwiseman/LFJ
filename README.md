@@ -10,4 +10,7 @@ This project aims to create a Discord bot for Elizabethtown College's E-Sports t
 
 # Methodology  
 The diagram below shows the system's architecture:  
-![architecture](https://github.com/jonwiseman/LFJ/raw/master/Docs/LFJ%20Overview.png)
+![architecture](https://github.com/jonwiseman/LFJ/raw/master/Docs/Images/LFJ%20Overview.png)
+
+The diagram below shows the system's backend design:
+![backend](https://github.com/jonwiseman/LFJ/raw/master/Docs/Images/Database.png)
