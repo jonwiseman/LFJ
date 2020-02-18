@@ -1,5 +1,6 @@
 import configparser
 import discord
+import sys
 
 
 def main():
@@ -21,6 +22,10 @@ def main():
 
         if message.content.startswith('$hello'):
             await message.channel.send('Hello!')
+
+        if message.content.startswith('exit'):
+            sys.exit(0)
+
 
     client.run(token)
 
