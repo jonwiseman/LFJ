@@ -18,3 +18,4 @@ The diagram below shows the system's backend design:
 # Discord Info
 Matt - MattBcool#2446
 Ryan - Soal#4781
+Ian - bowlian#0395
