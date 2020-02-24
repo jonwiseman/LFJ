@@ -14,3 +14,8 @@ The diagram below shows the system's architecture:
 
 The diagram below shows the system's backend design:
 ![backend](https://github.com/jonwiseman/LFJ/raw/master/Docs/Images/Database.png)
+
+# Discord Info
+Matt - MattBcool#2446
+Ryan - Soal#4781
+Ian - bowlian#0395
