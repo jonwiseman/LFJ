@@ -14,6 +14,7 @@ def main():
     @client.event
     async def on_ready():
         print('We have logged in as {0.user}'.format(client))
+        guild_list = client.guilds
 
     @client.event
     async def on_message(message):
@@ -21,10 +22,10 @@ def main():
             return
 
         if message.content.startswith('$hello'):
-            await message.channel.send('Hello!')
+            await message.channel.send(f'Hello, {message.author}!')
 
         if message.content.startswith('exit'):
-            sys.exit(0)
+            await client.logout()
 
 
     client.run(token)
