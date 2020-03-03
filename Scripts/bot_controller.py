@@ -7,7 +7,8 @@ def main():
     commands = {
         'add_user': user_queries.main,
         'query_user': user_queries.main,
-        'delete_user': user_queries.main
+        'delete_user': user_queries.main,
+        'update_user': user_queries.main
     }
 
     config = configparser.ConfigParser()
@@ -38,6 +39,7 @@ def main():
             await message.channel.send("Invalid command")
             return
 
+        tokens.append(message.author)
         result = commands[command](len(tokens), tokens)
 
         if result == 1:
