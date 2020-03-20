@@ -6,7 +6,7 @@ import re
 
 def main(argc, argv):
     config = configparser.ConfigParser()  # read and parse the config file
-    config.read(r'..\configuration.conf')
+    config.read(r'../configuration.conf')
 
     username = config['Database']['username']  # get details for signing in to database
     password = config['Database']['password']

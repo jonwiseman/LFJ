@@ -17,7 +17,7 @@ def main():
     event_created = True
 
     config = configparser.ConfigParser()        # read and parse configuration file
-    config.read(r'..\configuration.conf')
+    config.read(r'../configuration.conf')
 
     token = config['Discord']['token']      # get the bot's unique token for sign-in
     event_channel_name = config['Discord']['events_channel']     # text name of the event channel
