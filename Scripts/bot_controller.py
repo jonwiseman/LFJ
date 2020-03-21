@@ -10,7 +10,9 @@ def main():
         'query_user': user_queries.main,
         'delete_user': user_queries.main,
         'update_user': user_queries.main,
-        'create_event': event_queries.main
+        'create_event': event_queries.main,
+        'delete_event': event_queries.main,
+        'get_events': event_queries.main
     }
 
     event_channel = None
@@ -59,7 +61,7 @@ def main():
                 result = commands['create_event'](2, ['create_event', new_event_message])
                 event_created = True
 
-                if result:
+                if result == 1:
                     await message.channel.send("Error executing command.  Please consult syntax")
                     return
 

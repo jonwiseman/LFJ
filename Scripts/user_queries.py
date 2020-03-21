@@ -45,6 +45,7 @@ def main(argc, argv):
             return 1
         return update_user(str(argv[-1]), argv[1], argv[2], cursor, cnx)
 
+    cursor.close()
     cnx.close()     # close the connection to the database
 
 
