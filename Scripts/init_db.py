@@ -7,7 +7,6 @@ def main():
         'add_user': add_user,
         'delete_user': delete_user,
         'add_game': add_game,
-        'delete_game': delete_game,
         'query_table': query_table
     }
 
