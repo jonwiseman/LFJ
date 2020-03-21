@@ -57,10 +57,11 @@ The bot's functionality is divided into modules: each script in the LFJ/Scripts 
 ## Available Commands  
 There are four commands available in LFJ right now:
 
-1. add_user  
-2. delete_user  
-3. query_user  
-4. update_user
+1. add_user
+2. delete_user
+3. query_user
+4. set_email
+5. set_admin
 
 **Adding a new user**     
 The add_user command can be used to add a new user to LFJ's database.  This is the first step necessary for a user to be able to register in game groups and for events.  Please note that the adding user MUST be an admin.  The syntax for this command is as follows:  
@@ -71,7 +72,7 @@ DISPLAY_NAME: the user's Discord display name (mine is jon_wiseman#8494)
 EMAIL: the user's email  
 ADMIN: the user's admin status (0 or 1).  Please note that a user with admin status 1 cannot be deleted via LFJ later
 
-**Deleting a user**    
+**Deleting a User**    
 The delete_user command can be used to delete a user from LFJ's database.  Please note that the user doing the deleting MUST be an admin, and that an admin cannot be deleted from the database.  The syntax for this command is as follows:  
 
 `@LFJ delete_user DISPLAY_NAME`
@@ -83,10 +84,15 @@ The query_user command requires one of two additional arguments: either ALL or a
 
 `@LFJ query_user [ALL|DISPLAY_NAME]`
 
-**Updating a User's Information**    
-In its current form, this command can only be used to update a user's email.  Please note that only an admin can update a user's information.  The syntax for this command is as follows:  
+**Setting a User's Email**    
+This command can be used to update a user's email.  Please note that only an admin can update a user's information.  The syntax for this command is as follows:  
 
-`@LFJ update_user DISPLAY_NAME EMAIL`  
+`@LFJ set_email DISPLAY_NAME EMAIL`  
 
 DISPLAY_NAME: Discord display name of the user whose email will be updated  
 EMAIL: new email for the user
+
+**Setting a User's Admin Status**
+This command can be used to update a user's admin status. Please not that only an admin can update another user's admin status. The syntax for this command is as follows:
+
+`@LFJ set_admin DISPLAY_NAME [TRUE|FALSE]`

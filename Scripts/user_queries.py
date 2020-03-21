@@ -40,11 +40,14 @@ def main(argc, argv):
         if argc != 3:       # syntax dictates 2 arguments (command, display name)
             return 1
         return delete_user(str(argv[-1]), argv[1], cursor, cnx)
-    elif command == 'update_user':
+    elif command == 'set_email':
         if argc != 4:       # syntax dictates 3 arguments (command, display name, new email)
             return 1
-        return update_user(str(argv[-1]), argv[1], argv[2], cursor, cnx)
-
+        return set_email(str(argv[-1]), argv[1], argv[2], cursor, cnx)
+    elif command == 'set_admin':
+        if argc != 4:       # syntax dictates 3 arguments (command, display name, admin status)
+            return 1
+        return set_admin_status(str(argv[-1]), argv[1], argv[2].lower(), cursor, cnx)
     cnx.close()     # close the connection to the database
 
 
@@ -109,7 +112,7 @@ def add_user(auth_user, data_insert, cursor, cnx):
     return cursor.fetchall()
 
 
-def update_user(auth_user, display_name, email, cursor, cnx):
+def set_email(auth_user, display_name, email, cursor, cnx):
     """
     Update the email associated with a user.
     :param auth_user: user authorizing change
@@ -131,12 +134,37 @@ def update_user(auth_user, display_name, email, cursor, cnx):
     return cursor.fetchall()
 
 
+def set_admin_status(auth_user, display_name, syntax, cursor, cnx):
+    """
+    Update the admin status associated with a user.
+    :param auth_user: user authorizing change
+    :param display_name: display name of user whose admin status will be changed
+    :param syntax: true or false depending on admin status being set
+    :param cursor: cursor object to execute query
+    :param cnx: connection object to commit changes
+    :return: the new table after updating the user table
+    """
+    admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
+    if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
+        return 1
+
+    if not (syntax == 'true' or syntax == 'false'): # syntax for setting admin status is not true or false
+        return 1
+
+    cursor.execute('update user '
+                   'set admin = %s'
+                   'where display_name = %s', (1 if syntax else 0, display_name))
+    cnx.commit()        # commit changes to user table
+    cursor.execute('select * from user')        # get new user table
+    return cursor.fetchall()
+
+
 def check_admin_status(display_name, cursor):
     """
     Check to see if a given user is an admin.  Only admins can change the database.
     :param display_name: display name of requesting user
     :param cursor: cursor object for executing search query
-    :return: 0 if the user is not an admin (or does not exist) or 1 if the user is an admin
+    :return: -1 if user does not exist, 0 if the user is not an admin, or 1 if the user is an admin
     """
     cursor.execute('select admin from user where display_name = %s', (display_name,))
     result = cursor.fetchall()
