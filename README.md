@@ -62,6 +62,7 @@ There are four commands available in LFJ right now:
 3. query_user
 4. set_email
 5. set_admin
+6. set_skill
 
 **Adding a new user**     
 The add_user command can be used to add a new user to LFJ's database.  This is the first step necessary for a user to be able to register in game groups and for events.  Please note that the adding user MUST be an admin.  The syntax for this command is as follows:  
@@ -96,3 +97,11 @@ EMAIL: new email for the user
 This command can be used to update a user's admin status. Please not that only an admin can update another user's admin status. The syntax for this command is as follows:
 
 `@LFJ set_admin DISPLAY_NAME [TRUE|FALSE]`
+
+**Setting a User's Game Skill**
+This command can be used to update a user's skill level for a given game. The syntax for this command is as follows:
+
+`@LFJ set_skill GAME SKILL_LEVEL
+
+GAME: game name for updating skill level (CSGO, LOL, RL)
+SKILL_LEVEL: skill ranking for game being updated (NUMERIC)

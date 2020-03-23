@@ -48,6 +48,10 @@ def main(argc, argv):
         if argc != 4:       # syntax dictates 3 arguments (command, display name, admin status)
             return 1
         return set_admin_status(str(argv[-1]), argv[1], argv[2].lower(), cursor, cnx)
+    elif command == 'set_skill':
+        if argc != 4:       # syntax dictates 3 arguments (command, game name, skill level)
+            return 1
+        return set_membership(argv[-1], argv[1], argv[2], cursor, cnx)
     cnx.close()     # close the connection to the database
 
 
@@ -153,10 +157,46 @@ def set_admin_status(auth_user, display_name, syntax, cursor, cnx):
 
     cursor.execute('update user '
                    'set admin = %s'
-                   'where display_name = %s', (1 if syntax else 0, display_name))
+                   'where display_name = %s', (1 if bool(syntax) else 0, display_name))
     cnx.commit()        # commit changes to user table
     cursor.execute('select * from user')        # get new user table
     return cursor.fetchall()
+
+
+def set_membership(auth_user, game_name, skill_level, cursor, cnx):
+    """
+    Sets a users membership with a particular game
+    :param auth_user: user authorizing change
+    :param game_name: name of game user wants to set skill_level for
+    :param skill_level: the level of skill the user holds in a game
+    :param cursor: cursor object for executing queries
+    :param cnx: connection object to commit changes
+    :return: 1 if there is an error, response text if successful
+    """
+    user_id = get_user_id(auth_user, cursor)    # gets user_id from display_name
+
+    if user_id == -1:   # user not found
+        return 1
+
+    game_id = get_game_id(game_name, cursor)    # gets game_id from game_name
+
+    if game_id == -1:   # game not found
+        return 1
+
+    if check_membership(user_id, game_id, cursor) == -1:    # user does not hold membership of game
+        cursor.execute('insert into membership '
+                       '(user_id, game_id, skill_level) '
+                       'values (%s, %s, %s)', (user_id, game_id, skill_level))
+    else:
+        cursor.execute('update membership '
+                       'set skill_level = %s '
+                       'where skill_level = %s', skill_level)
+    cnx.commit()    # commit changes to membership table
+
+    return "Successfully updated your skill level to " + skill_level + " for " + game_id
+
+
+# HELPER FUNCTIONS #
 
 
 def check_admin_status(display_name, cursor):
@@ -166,13 +206,62 @@ def check_admin_status(display_name, cursor):
     :param cursor: cursor object for executing search query
     :return: -1 if user does not exist, 0 if the user is not an admin, or 1 if the user is an admin
     """
-    cursor.execute('select admin from user where display_name = %s', (display_name,))
+    cursor.execute('select admin from user where display_name = %s', display_name)
     result = cursor.fetchall()
 
-    if len(result) == 0:        # user not found
+    if len(result) == 0:    # user not found
         return -1
 
     return result[0][0]     # return 0 or 1
+
+
+def check_membership(user_id, game_id, cursor):
+    """
+    Check to see if a given user has membership to a game
+    :param user_id: user id to check
+    :param game_id: game id to check
+    :param cursor: cursor object for executing search query
+    :return: -1 if membership does not exist, 1 if user has membership to given game
+    """
+    cursor.execute('select user_id from membership where user_id = %s', user_id)
+    result = cursor.fetchall()
+
+    if len(result) == 0:    # user not found
+        return -1
+
+    return result[0][0]     # return user id
+
+
+def get_user_id(display_name, cursor):
+    """
+    Gets a user id from display name of a user
+    :param display_name: display name of user whose id will be gotten
+    :param cursor: cursor object for executing search query
+    :return: -1 if user does not exist, user_id if user is found
+    """
+    cursor.execute('select user_id from user where display_name = %s', display_name)
+    result = cursor.fetchall()
+
+    if len(result) == 0:    # user not found
+        return -1
+
+    return result[0][0]     # return user id
+
+
+def get_game_id(game_name, cursor):
+    """
+    Gets a game id from game name
+    :param game_name: name of a game to get id for
+    :param cursor: cursor object for executing search query
+    :return: -1 if game does not exist, game_id if game is found
+    """
+    cursor.execute('select game_id from game where name = %s', game_name.lower())
+    result = cursor.fetchall()
+
+    if len(result) == 0:    # game not found
+        return -1
+
+    return result[0][0]     # return game id
 
 
 if __name__ == '__main__':
