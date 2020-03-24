@@ -9,7 +9,9 @@ def main():
         'add_user': user_queries.main,
         'query_user': user_queries.main,
         'delete_user': user_queries.main,
-        'update_user': user_queries.main,
+        'set_email': user_queries.main,
+        'set_admin': user_queries.main,
+        'set_skill': user_queries.main,
         'create_event': event_queries.main
     }
 
