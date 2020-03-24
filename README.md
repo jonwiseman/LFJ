@@ -19,7 +19,7 @@ In order to use the LFJ bot, you will need two things:
 **Creating a Virtual Environment**  
 It's good practice to create a virtual environment for each one of your projects.  You can think of it like a separate Python installation for a project.  Creating a new virtual environment is simple: navigate to LFJ's root directory and run the following command:
 
-`python venv env`
+`python -m venv env`
 
 This will create a new virtual environment in the root directory called env (you can name it whatever you want: just substitute a file name for env).  To activate your new virtual environment on Windows, run the following command:
 
