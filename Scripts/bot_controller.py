@@ -9,17 +9,20 @@ def main():
         'add_user': user_queries.main,
         'query_user': user_queries.main,
         'delete_user': user_queries.main,
+
         'set_email': user_queries.main,
         'set_admin': user_queries.main,
         'set_skill': user_queries.main,
         'create_event': event_queries.main
+        'delete_event': event_queries.main,
+        'get_events': event_queries.main
     }
 
     event_channel = None
     event_created = True
 
     config = configparser.ConfigParser()        # read and parse configuration file
-    config.read(r'..\configuration.conf')
+    config.read(r'../configuration.conf')
 
     token = config['Discord']['token']      # get the bot's unique token for sign-in
     event_channel_name = config['Discord']['events_channel']     # text name of the event channel
@@ -61,7 +64,7 @@ def main():
                 result = commands['create_event'](2, ['create_event', new_event_message])
                 event_created = True
 
-                if result:
+                if result == 1:
                     await message.channel.send("Error executing command.  Please consult syntax")
                     return
 

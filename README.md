@@ -19,11 +19,15 @@ In order to use the LFJ bot, you will need two things:
 **Creating a Virtual Environment**  
 It's good practice to create a virtual environment for each one of your projects.  You can think of it like a separate Python installation for a project.  Creating a new virtual environment is simple: navigate to LFJ's root directory and run the following command:
 
-`python venv env`
+`python -m venv env`
 
-This will create a new virtual environment in the root directory called env (you can name it whatever you want: just substitute a file name for env).  To activate your new virtual environment, run the following command:
+This will create a new virtual environment in the root directory called env (you can name it whatever you want: just substitute a file name for env).  To activate your new virtual environment on Windows, run the following command:
 
 `.\env\Scripts\activate`
+
+On Linux, run:
+
+`source env/bin/activate`
 
 You should now see a little (env) before your command line, indicating that you are running in a virtual environment.
 
@@ -39,6 +43,7 @@ To maintain data security (such as database usernames and passwords, and the bot
 
 [Discord]  
 token =   
+events_channel =   
 
 [Database]  
 username =   
@@ -49,13 +54,13 @@ database =
 Creating a configuration file is simple: create a simple text file, copy and paste the above text, fill in the required information (don't worry about putting quotations around Strings or anything like that), and save the file as configuration.conf.  Keep the configuration file in the project's root directory (i.e. not inside any folder; keep it next to the .gitignore file and the README).  To make sure that the token and database information is kept private, make sure that configuration.conf is listed in the .gitignore (this keeps it from being pushed to Github).
 
 **Building the Database**    
-The next step is to initialize the backend database.  Open MySQL (either through the workbench - my preferred option - or through its command line) and run the lfj.sql script (located under LFJ/Database).  This script creates the database and initializes the user table with a single entry: jon_wiseman#8494 with admin status.  Don't worry, you can add yourself to the database later via the LFJ bot in Discord.  The backend scripts are run such that only an admin can add, delete, or update users; additionally, an admin cannot delete another admin user (so be careful adding in new users via LFJ: if you add an admin, you'll have to manually remove him via MySQL queries).  Admin status is either 0 (NOT an admin) or 1 (IS an admin).
+The next step is to initialize the backend database.  Open MySQL (either through the workbench - my preferred option - or through its command line) and run the lfj.sql script (located under LFJ/Database).  This script creates the database and initializes the user table with a single entry: jon_wiseman#8494 with admin status.  Don't worry, you can add yourself to the database later via the LFJ bot in Discord or run init_db.py and add yourself in manually.  The backend scripts are run such that only an admin can add, delete, or update users; additionally, an admin cannot delete another admin user (so be careful adding in new users via LFJ: if you add an admin, you'll have to manually remove him via MySQL queries or using the init_db.py script).  Admin status is either 0 (NOT an admin) or 1 (IS an admin).
 
 **Starting the Bot**  
 The bot's functionality is divided into modules: each script in the LFJ/Scripts folder controls one of the bot's functions (such as querying the user table or adding events).  To run the bot, you need only run bot_controller.py.  After the bot is running, you should see his status turn to green in Discord.  Do not interact with the bot via the command line; after the bot is started, only send it commands via Discord.  A list of commands you can use to interact with the bot are available in the [Available Commands](https://github.com/jonwiseman/LFJ/wiki/2.-Available-Commands) section.
 
 ## Available Commands  
-There are four commands available in LFJ right now:
+There are nine commands available in LFJ right now:
 
 1. add_user
 2. delete_user
@@ -63,6 +68,9 @@ There are four commands available in LFJ right now:
 4. set_email
 5. set_admin
 6. set_skill
+7. create_event  
+8. delete_event  
+9. get_events  
 
 **Adding a new user**     
 The add_user command can be used to add a new user to LFJ's database.  This is the first step necessary for a user to be able to register in game groups and for events.  Please note that the adding user MUST be an admin.  The syntax for this command is as follows:  
@@ -93,6 +101,7 @@ This command can be used to update a user's email.  Please note that only an adm
 DISPLAY_NAME: Discord display name of the user whose email will be updated  
 EMAIL: new email for the user
 
+
 **Setting a User's Admin Status**
 This command can be used to update a user's admin status. Please not that only an admin can update another user's admin status. The syntax for this command is as follows:
 
@@ -105,3 +114,24 @@ This command can be used to update a user's skill level for a given game. The sy
 
 GAME: game name for updating skill level (CSGO, LOL, RL)
 SKILL_LEVEL: skill ranking for game being updated (NUMERIC)
+
+**Creating a New Event**  
+The create_event command can be used to create a new event, and requires three positional arguments: an event title (must be one token), an event date (formatted as MM/DD/YYYY), and a game title.  Right now, any user can create an event.  The syntax for this command is as follows:  
+
+`@LFJ create_event TITLE DATE GAME`  
+
+TITLE: event's title  
+DATE: event's date (formatted MM/DD/YYYY)  
+GAME: game's title (must match what is in the database)  
+
+**Deleting an Event**  
+The delete_event command delete's an event from the LFJ database; it requires one positional argument: event title (must be one token).  Only an admin user can delete an event.  The syntax for this command is as follows:  
+
+`@LFJ delete_event TITLE`
+
+TITLE: event's title
+
+**See all Events**  
+The get_events command returns all events in the LFJ database; it does not require any positional arguments.  The syntax for this command is as follows:  
+
+`@LFJ get_events`
