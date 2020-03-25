@@ -60,15 +60,17 @@ The next step is to initialize the backend database.  Open MySQL (either through
 The bot's functionality is divided into modules: each script in the LFJ/Scripts folder controls one of the bot's functions (such as querying the user table or adding events).  To run the bot, you need only run bot_controller.py.  After the bot is running, you should see his status turn to green in Discord.  Do not interact with the bot via the command line; after the bot is started, only send it commands via Discord.  A list of commands you can use to interact with the bot are available in the [Available Commands](https://github.com/jonwiseman/LFJ/wiki/2.-Available-Commands) section.
 
 ## Available Commands  
-There are six commands available in LFJ right now:
+There are nine commands available in LFJ right now:
 
-1. add_user  
-2. delete_user  
-3. query_user  
-4. update_user  
-5. create_event  
-6. delete_event  
-7. get_events  
+1. add_user
+2. delete_user
+3. query_user
+4. set_email
+5. set_admin
+6. set_skill
+7. create_event  
+8. delete_event  
+9. get_events  
 
 **Adding a new user**     
 The add_user command can be used to add a new user to LFJ's database.  This is the first step necessary for a user to be able to register in game groups and for events.  Please note that the adding user MUST be an admin.  The syntax for this command is as follows:  
@@ -79,7 +81,7 @@ DISPLAY_NAME: the user's Discord display name (mine is jon_wiseman#8494)
 EMAIL: the user's email  
 ADMIN: the user's admin status (0 or 1).  Please note that a user with admin status 1 cannot be deleted via LFJ later
 
-**Deleting a user**    
+**Deleting a User**    
 The delete_user command can be used to delete a user from LFJ's database.  Please note that the user doing the deleting MUST be an admin, and that an admin cannot be deleted from the database.  The syntax for this command is as follows:  
 
 `@LFJ delete_user DISPLAY_NAME`
@@ -91,13 +93,27 @@ The query_user command requires one of two additional arguments: either ALL or a
 
 `@LFJ query_user [ALL|DISPLAY_NAME]`
 
-**Updating a User's Information**    
-In its current form, this command can only be used to update a user's email.  Please note that only an admin can update a user's information.  The syntax for this command is as follows:  
+**Setting a User's Email**    
+This command can be used to update a user's email.  Please note that only an admin can update a user's information.  The syntax for this command is as follows:  
 
-`@LFJ update_user DISPLAY_NAME EMAIL`  
+`@LFJ set_email DISPLAY_NAME EMAIL`  
 
 DISPLAY_NAME: Discord display name of the user whose email will be updated  
 EMAIL: new email for the user
+
+
+**Setting a User's Admin Status**
+This command can be used to update a user's admin status. Please not that only an admin can update another user's admin status. The syntax for this command is as follows:
+
+`@LFJ set_admin DISPLAY_NAME [TRUE|FALSE]`
+
+**Setting a User's Game Skill**
+This command can be used to update a user's skill level for a given game. The syntax for this command is as follows:
+
+`@LFJ set_skill GAME SKILL_LEVEL
+
+GAME: game name for updating skill level (CSGO, LOL, RL)
+SKILL_LEVEL: skill ranking for game being updated (NUMERIC)
 
 **Creating a New Event**  
 The create_event command can be used to create a new event, and requires three positional arguments: an event title (must be one token), an event date (formatted as MM/DD/YYYY), and a game title.  Right now, any user can create an event.  The syntax for this command is as follows:  
