@@ -101,19 +101,18 @@ This command can be used to update a user's email.  Please note that only an adm
 DISPLAY_NAME: Discord display name of the user whose email will be updated  
 EMAIL: new email for the user
 
-
-**Setting a User's Admin Status**
+**Setting a User's Admin Status**  
 This command can be used to update a user's admin status. Please not that only an admin can update another user's admin status. The syntax for this command is as follows:
 
-`@LFJ set_admin DISPLAY_NAME [TRUE|FALSE]`
+`@LFJ set_admin DISPLAY_NAME [TRUE|FALSE]`  
 
-**Setting a User's Game Skill**
+**Setting a User's Game Skill**  
 This command can be used to update a user's skill level for a given game. The syntax for this command is as follows:
 
-`@LFJ set_skill GAME SKILL_LEVEL
+`@LFJ set_skill GAME SKILL_LEVEL`
 
-GAME: game name for updating skill level (CSGO, LOL, RL)
-SKILL_LEVEL: skill ranking for game being updated (NUMERIC)
+GAME: game name for updating skill level (CSGO, LOL, RL)  
+SKILL_LEVEL: skill ranking for game being updated (NUMERIC)  
 
 **Creating a New Event**  
 The create_event command can be used to create a new event, and requires three positional arguments: an event title (must be one token), an event date (formatted as MM/DD/YYYY), and a game title.  Right now, any user can create an event.  The syntax for this command is as follows:  
