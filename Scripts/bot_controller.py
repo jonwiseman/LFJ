@@ -6,16 +6,45 @@ import event_queries
 
 def main():
     commands = {        # list of commands available for bot to use
+        'help': give_help,
         'add_user': user_queries.main,
         'query_user': user_queries.main,
         'delete_user': user_queries.main,
-
         'set_email': user_queries.main,
         'set_admin': user_queries.main,
         'set_skill': user_queries.main,
-        'create_event': event_queries.main
+        'create_event': event_queries.main,
         'delete_event': event_queries.main,
         'get_events': event_queries.main
+    }
+    command_syntax = {
+        'help': ['Display help.  Either list all commands or enter a specific command',
+                 ('COMMAND', 0, 'A specific command for which to display help.  If not specified, return list of all '
+                                'commands')],
+        'add_user': ['Add a new user to the LFJ backend',
+                     ('DISPLAY_NAME', 1, "User's display name"),
+                     ('EMAIL', 1, "User's email"),
+                     ('ADMIN', 1, "Admin status of new user")],
+        'query_user': ["Get a specified user's information",
+                       ('ARGUMENT', 1, "Either ALL or DISPLAY_NAME")],
+        'delete_user': ["Delete a user from the LFJ backend",
+                        ('DISPLAY_NAME', 1, "Display name of user to be deleted")],
+        'set_email': ["Update a user's email",
+                      ('DISPLAY_NAME', 1, "User's Display name"),
+                      ('EMAIL', 1, "New user email")],
+        'set_admin': ["Set a user's admin status",
+                      ('DISPLAY_NAME', 1, "User's display name"),
+                      ('TRUE/FALSE', 1, "New value of admin status")],
+        'set_skill': ["Set a user's game skill",
+                      ('GAME', 1, 'Game name for updating skill'),
+                      ('SKILL_LEVEL', 1, "Skill ranking for game being updated")],
+        'create_event': ["Create a new event",
+                         ('TITLE', 1, "Event's title"),
+                         ('DATE', 1, "Event's date"),
+                         ('GAME', 1, "Game to be played at event")],
+        'delete_event': ["Delete a scheduled event",
+                         ('TITLE', 1, "Title of event to be deleted")],
+        'get_events': ["Get all events"]
     }
 
     event_channel = None
@@ -89,18 +118,31 @@ def main():
             event_created = False
             await event_channel.send(event_message_creator(tokens[1:]))
             return
+        elif command == 'help':
+            result = commands['help'](tokens, commands, command_syntax)
         elif command not in commands:     # if the command is not recognized, then notify the sender
             await message.channel.send("Invalid command")
             return
-
-        tokens.append(message.author)       # get the sending user's information and pass it as an argument
-        result = commands[command](len(tokens), tokens)     # handle the command according to command dictionary
+        else:
+            tokens.append(message.author)  # get the sending user's information and pass it as an argument
+            result = commands[command](len(tokens), tokens)  # handle the command according to command dictionary
 
         if result == 1:     # if there was an error executing the command, notify the user
             await message.channel.send("Error executing command.  Please consult syntax")
             return
 
-        await message.channel.send(result)      # if there were no errors, then send the appropriate response
+        if type(result) is str:
+            await message.channel.send(result)
+        else:
+            if len(result) == 0:
+                await message.channel.send(result)
+            else:
+                try:
+                    send = "\n".join(result)
+                except TypeError:
+                    await message.channel.send(result)
+                else:  # if successful in connecting, create a cursor object
+                    await message.channel.send(send)
 
     client.run(token)       # start the bot based on its sign-in token
 
@@ -114,6 +156,40 @@ def check_mentions(first_mention, client):
     :return: True if the first mention is the bot; False otherwise
     """
     return str(first_mention) == str(client.user)
+
+
+def give_help(tokens, commands, command_syntax):
+    n_tokens = len(tokens)
+    if n_tokens == 1:
+        return commands.keys()
+    elif n_tokens == 2:
+        command = tokens[-1]
+        if command not in commands:
+            return "This command does not exist."
+        else:
+            return format_help(command_syntax[command])
+    else:
+        return 1
+
+
+def format_help(command_description):
+    if len(command_description) == 1:
+        return command_description[0]
+
+    descr = [command_description[0]]
+    params = []
+    for param in command_description[1:]:
+        params.append(create_param_line(param))
+
+    descr.extend(params)
+
+    return descr
+
+
+def create_param_line(param_tuple):
+    name = param_tuple[0]
+    descr = param_tuple[2]
+    return f"{name}: {descr}"
 
 
 def event_message_creator(message):
