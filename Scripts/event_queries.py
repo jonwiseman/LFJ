@@ -50,6 +50,10 @@ def main(argc, argv):
         if argc != 2:       # wrong number of parameters passed
             return 1
         return qet_events(cursor)
+    elif command == 'query_event':
+        if argc != 3:
+            return 1
+        return query_event(argv[-2], cursor)
 
     cursor.close()      # close the cursor
     cnx.close()  # close the connection to the database
@@ -61,9 +65,9 @@ def parse_creation_message(message):
     :param message: bot's creation message
     :return: title, date and game (or three error flags)
     """
-    title = re.search('Title: [A-Z]+([_]*[A-Z]*)*', message).group(0).split(' ')[1]
+    title = re.search('Title: [\w]+([_]*[\w]*)*', message).group(0).split(' ')[1]
     date = re.search('Date: [0-9]+/[0-9]+/[0-9][0-9][0-9][0-9]', message).group(0).split(' ')[1]
-    game = re.search('Game: [A-Z]+', message).group(0).split(' ')[1]
+    game = re.search('Game: [\w]+', message).group(0).split(' ')[1]
 
     if title is None or date is None or game is None:
         return 1, 1, 1
@@ -125,6 +129,11 @@ def qet_events(cursor):
     :return: all events in the event table
     """
     cursor.execute('select * from event')
+    return cursor.fetchall()
+
+
+def query_event(title, cursor):
+    cursor.execute('select * from event where title = %s', (title,))
     return cursor.fetchall()
 
 
