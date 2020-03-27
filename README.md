@@ -60,7 +60,7 @@ The next step is to initialize the backend database.  Open MySQL (either through
 The bot's functionality is divided into modules: each script in the LFJ/Scripts folder controls one of the bot's functions (such as querying the user table or adding events).  To run the bot, you need only run bot_controller.py.  After the bot is running, you should see his status turn to green in Discord.  Do not interact with the bot via the command line; after the bot is started, only send it commands via Discord.  A list of commands you can use to interact with the bot are available in the [Available Commands](https://github.com/jonwiseman/LFJ/wiki/2.-Available-Commands) section.
 
 ## Available Commands  
-There are ten commands available in LFJ right now:
+There are fifteen commands available in LFJ right now:
 
 1. add_user
 2. delete_user
@@ -72,6 +72,11 @@ There are ten commands available in LFJ right now:
 8. delete_event  
 9. get_events  
 10. help  
+11. add_game  
+12. delete_game  
+13. query_game  
+14. set_game_name  
+15. get_events  
 
 **Adding a new user**     
 The add_user command can be used to add a new user to LFJ's database.  This is the first step necessary for a user to be able to register in game groups and for events.  Please note that the adding user MUST be an admin.  The syntax for this command is as follows:  
@@ -142,3 +147,42 @@ The help command can be used to get help from the bot regarding available comman
 `@LFJ help [COMMAND]`
 
 COMMAND: (optional) specific command to get help for  
+
+**Adding a new Game**  
+The add_game command can be used to add a new game to the bot's backend.  Please note that the requesting user must be an administrator to successfully add a new game.  The syntax for this command is as follows:  
+
+`@LFJ add_game ID NAME`  
+
+ID: numeric ID for game  
+NAME: string name of game  
+
+**Deleting a Game**  
+The delete_game command can be used to delete a game from the bot's backend.  Please note that the requesting user must be an administrator to successfully delete a game.  The syntax for this command is as follows:  
+
+`@LFJ delete_game NAME`  
+
+NAME: string name of game to be deleted
+
+**Querying for a Game**  
+The query_game command can be used to get information about one specific game or all games in the bot's database.  The syntax for this command is as follows:  
+
+`@LFJ query_game [ALL/NAME]`
+
+ALL: to query all games in the database  
+NAME: name of specific game to query  
+
+**Editing a Game's ID**  
+The set_game_id command can be used to edit a game's numeric ID.  Please note that the requesting user must be an admin in order to successfully edit a game's information.  The syntax for this command is as follows:  
+
+`@LFJ set_game_id NAME NEW_ID`
+
+NAME: game's string name for identification  
+NEW_ID: new numeric ID of game  
+
+**Editing a Game's Name**
+The set_game_name command can be used to edit a game's name.  Please note that the requesting user must be an admin in order to successfully edit a game's information.  The syntax for this command is as follows:  
+
+`@LFJ set_game_name OLD_NAME NEW_NAME`  
+
+OLD_NAME: old string name of game  
+NEW_NAME: new string name of game
