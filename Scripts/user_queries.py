@@ -138,12 +138,12 @@ def set_email(auth_user, display_name, email, cursor, cnx):
     return cursor.fetchall()
 
 
-def set_admin_status(auth_user, display_name, syntax, cursor, cnx):
+def set_admin_status(auth_user, display_name, new_status, cursor, cnx):
     """
     Update the admin status associated with a user.
     :param auth_user: user authorizing change
     :param display_name: display name of user whose admin status will be changed
-    :param syntax: true or false depending on admin status being set
+    :param new_status: true or false depending on admin status being set
     :param cursor: cursor object to execute query
     :param cnx: connection object to commit changes
     :return: the new table after updating the user table
@@ -152,12 +152,12 @@ def set_admin_status(auth_user, display_name, syntax, cursor, cnx):
     if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
         return 1
 
-    if not (syntax == 'true' or syntax == 'false'): # syntax for setting admin status is not true or false
+    if not (new_status == 'true' or new_status == 'false'):  # syntax for setting admin status is not true or false
         return 1
 
     cursor.execute('update user '
-                   'set admin = %s'
-                   'where display_name = %s', (1 if bool(syntax) else 0, display_name))
+                   'set admin = %s '
+                   'where display_name = %s', (1 if new_status == "true" else 0, display_name))
     cnx.commit()        # commit changes to user table
     cursor.execute('select * from user')        # get new user table
     return cursor.fetchall()
@@ -206,7 +206,7 @@ def check_admin_status(display_name, cursor):
     :param cursor: cursor object for executing search query
     :return: -1 if user does not exist, 0 if the user is not an admin, or 1 if the user is an admin
     """
-    cursor.execute('select admin from user where display_name = %s', display_name)
+    cursor.execute('select admin from user where display_name = %s', (display_name, ))
     result = cursor.fetchall()
 
     if len(result) == 0:    # user not found
@@ -223,7 +223,7 @@ def check_membership(user_id, game_id, cursor):
     :param cursor: cursor object for executing search query
     :return: -1 if membership does not exist, 1 if user has membership to given game
     """
-    cursor.execute('select user_id from membership where user_id = %s', user_id)
+    cursor.execute('select user_id from membership where user_id = %s and game_id = %s', (user_id, game_id))
     result = cursor.fetchall()
 
     if len(result) == 0:    # user not found
