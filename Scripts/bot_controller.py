@@ -24,7 +24,8 @@ def main():
 
         'create_event': event_queries.main,
         'delete_event': event_queries.main,
-        'get_events': event_queries.main
+        'get_events': event_queries.main,
+        'query_event': event_queries.main
     }
     command_syntax = {
         'help': ['Display help.  Either list all commands or enter a specific command',
@@ -66,7 +67,9 @@ def main():
                          ('GAME', 1, "Game to be played at event")],
         'delete_event': ["Delete a scheduled event",
                          ('TITLE', 1, "Title of event to be deleted")],
-        'get_events': ["Get all events"]
+        'get_events': ["Get all events"],
+        'query_event': ["Get information about a specific event",
+                        ('NAME', 1, "Name of event to query information about")]
     }
 
     event_channel = None
@@ -137,9 +140,18 @@ def main():
             if len(tokens) != 4:
                 await message.channel.send("Error executing command.  Please consult syntax")
                 return
-            event_created = False
-            await event_channel.send(event_message_creator(tokens[1:]))
-            return
+            query_command = ['query_game', tokens[-1], message.author]
+            game_result = commands['query_game'](len(query_command), query_command)
+
+            event_query_command = ['query_event', tokens[1], message.author]
+            event_exists = commands['query_event'](len(event_query_command), event_query_command)
+
+            if len(game_result) == 0 or len(event_exists) != 0:
+                result = 1      # set an error flag
+            else:
+                event_created = False
+                await event_channel.send(event_message_creator(tokens[1:]))
+                return
         elif command == 'help':
             result = commands['help'](tokens, commands, command_syntax)
         elif command not in commands:     # if the command is not recognized, then notify the sender
