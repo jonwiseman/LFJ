@@ -2,17 +2,26 @@ import configparser
 import discord
 import user_queries
 import event_queries
+import game_queries
 
 
 def main():
     commands = {        # list of commands available for bot to use
         'help': give_help,
+
         'add_user': user_queries.main,
         'query_user': user_queries.main,
         'delete_user': user_queries.main,
         'set_email': user_queries.main,
         'set_admin': user_queries.main,
         'set_skill': user_queries.main,
+
+        'add_game': game_queries.main,
+        'query_game': game_queries.main,
+        'delete_game': game_queries.main,
+        'set_game_name': game_queries.main,
+        'set_game_id': game_queries.main,
+
         'create_event': event_queries.main,
         'delete_event': event_queries.main,
         'get_events': event_queries.main
@@ -35,6 +44,19 @@ def main():
         'set_admin': ["Set a user's admin status",
                       ('DISPLAY_NAME', 1, "User's display name"),
                       ('TRUE/FALSE', 1, "New value of admin status")],
+        'add_game': ["Add a game to the LFJ backend",
+                     ('ID', 1, "Numeric ID for a game (check existing IDs and pick one that is not taken)"),
+                     ('NAME', 1, "String name of the game")],
+        'query_game': ["Get information about ALL games or one specific game",
+                       ('ALL/NAME', 1, 'ALL to see all games; NAME to see a specific game')],
+        'delete_game': ["Delete a game from the LFJ backend",
+                        ('NAME', 1, "Name of game to be deleted")],
+        'set_game_name': ["Edit a game's given name",
+                          ('OLD_NAME', 1, "Old name of game"),
+                          ('NEW_NAME', 1, "New name of game")],
+        'set_game_id': ["Edit a game's ID",
+                        ('NAME', 1, "Game's given name"),
+                        ('NEW_ID', 1, "Game's new ID")],
         'set_skill': ["Set a user's game skill",
                       ('GAME', 1, 'Game name for updating skill'),
                       ('SKILL_LEVEL', 1, "Skill ranking for game being updated")],
