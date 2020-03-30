@@ -60,7 +60,7 @@ The next step is to initialize the backend database.  Open MySQL (either through
 The bot's functionality is divided into modules: each script in the LFJ/Scripts folder controls one of the bot's functions (such as querying the user table or adding events).  To run the bot, you need only run bot_controller.py.  After the bot is running, you should see his status turn to green in Discord.  Do not interact with the bot via the command line; after the bot is started, only send it commands via Discord.  A list of commands you can use to interact with the bot are available in the [Available Commands](https://github.com/jonwiseman/LFJ/wiki/2.-Available-Commands) section.
 
 ## Available Commands  
-There are fifteen commands available in LFJ right now:
+There are sixteen commands available in LFJ right now:
 
 1. add_user
 2. delete_user
@@ -77,6 +77,7 @@ There are fifteen commands available in LFJ right now:
 13. query_game  
 14. set_game_name  
 15. get_events  
+16. query_event
 
 **Adding a new user**     
 The add_user command can be used to add a new user to LFJ's database.  This is the first step necessary for a user to be able to register in game groups and for events.  Please note that the adding user MUST be an admin.  The syntax for this command is as follows:  
@@ -186,3 +187,10 @@ The set_game_name command can be used to edit a game's name.  Please note that t
 
 OLD_NAME: old string name of game  
 NEW_NAME: new string name of game
+
+**Querying for a Specific Event**  
+The query_event command can be used to get information about a specific event.  The syntax for this command is as follows:  
+
+`@LFJ query_event NAME`
+
+NAME: string name of the event about which to get information
