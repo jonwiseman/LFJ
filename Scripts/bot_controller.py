@@ -90,6 +90,7 @@ def main():
         :return: none; print ready status to console
         """
         global event_channel
+        global event_created
         print('We have logged in as {0.user}'.format(client))
         for channel in client.get_all_channels():
             if str(channel.name) == event_channel_name:
@@ -98,6 +99,8 @@ def main():
         if event_channel is None:       # server does not have a dedicated events channel
             print("ERROR: Could not find event channel")
             await client.logout()
+
+        event_created = True
 
     @client.event
     async def on_message(message):
@@ -109,6 +112,7 @@ def main():
         """
         global event_channel
         global event_created
+
         new_event_message = None
 
         if message.author == client.user:       # if the bot sent the message
@@ -125,9 +129,6 @@ def main():
                 return
             else:
                 return
-        if message.content.startswith('exit'):      # received the exit command
-            await client.logout()       # log the bot out
-            return      # return and end the program
         if len(message.mentions) == 0:      # if there are NO mentions, ignore the message
             return
         if not check_mentions(message.mentions[0], client):     # if the bot was not mentioned, do nothing
@@ -154,6 +155,9 @@ def main():
                 return
         elif command == 'help':
             result = commands['help'](tokens, commands, command_syntax)
+        elif command == 'exit':  # received the exit command
+            await client.logout()  # log the bot out
+            return  # return and end the program
         elif command not in commands:     # if the command is not recognized, then notify the sender
             await message.channel.send("Invalid command")
             return
