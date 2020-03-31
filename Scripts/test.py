@@ -27,9 +27,21 @@ def main():
         cursor = cnx.cursor()
 
     client = LFJ(command_prefix='$', case_insensitive=True, event_channel=event_channel_name, cursor=cursor, cnx=cnx)
+
     client.add_command(LFJ.query_user)
     client.add_command(LFJ.add_user)
     client.add_command(LFJ.delete_user)
+    client.add_command(LFJ.set_admin_status)
+    client.add_command(LFJ.set_email)
+
+    client.add_command(LFJ.add_game)
+    client.add_command(LFJ.delete_game)
+    client.add_command(LFJ.query_game)
+    client.add_command(LFJ.edit_name)
+    client.add_command(LFJ.edit_id)
+
+    client.add_command(LFJ.create_event)
+
     client.add_command(LFJ.exit)
     client.run(token)
 
