@@ -6,59 +6,6 @@ import time
 from datetime import date
 
 
-def main(argc, argv):
-    config = configparser.ConfigParser()  # read and parse the config file
-    config.read(r'../configuration.conf')
-
-    username = config['Database']['username']  # get details for signing in to database
-    password = config['Database']['password']
-    host = config['Database']['host']
-    database = config['Database']['database']
-
-    try:        # try connecting to the database
-        cnx = mysql.connector.connect(user=username,
-                                      password=password,
-                                      host=host,
-                                      database=database)
-    except mysql.connector.Error:       # catch connection errors
-        return 1
-    else:       # if successful in connecting, create a cursor object
-        cursor = cnx.cursor()
-
-    command = argv[0]       # get the command entered by the user
-
-    if command == 'create_event':       # creating a new event
-        title, event_date, game_name = parse_creation_message(argv[1].content)      # parse creation message
-        game_id = get_game_id(game_name, cursor)        # get the game's id (to check if it exists and for insert)
-
-        if title == 1 or event_date == 1 or game_id is None:        # invalid details on any one of the params
-            return 1
-
-        data_insert = {     # prepare data insert
-            'event_id': argv[1].id,     # get the event's ID (which is the creation message's ID)
-            'date': date.fromtimestamp(int(time.mktime(time.strptime(event_date, '%m/%d/%Y')))),        # create date
-            'game_id': game_id[0][0],       # get game's ID number
-            'title': title,     # event's title
-        }
-
-        return create_event(data_insert, cursor, cnx)       # create the event or return an error flag
-    elif command == 'delete_event':     # delete an event
-        if argc != 3:       # wrong number of parameters passed
-            return 1
-        return delete_event(str(argv[-1]), argv[-2], cursor, cnx)       # delete the event or return an error flag
-    elif command == 'get_events':       # get a list of all events
-        if argc != 2:       # wrong number of parameters passed
-            return 1
-        return qet_events(cursor)
-    elif command == 'query_event':
-        if argc != 3:
-            return 1
-        return query_event(argv[-2], cursor)
-
-    cursor.close()      # close the cursor
-    cnx.close()  # close the connection to the database
-
-
 def parse_creation_message(message):
     """
     Parse the bot's creation message and extract event title, event date, and event game using regular expressions.

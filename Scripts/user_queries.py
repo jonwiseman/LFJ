@@ -1,4 +1,45 @@
-def query_user(argument, cursor):
+from discord.ext import commands
+
+
+class UserQueries(commands.Cog):
+    def __init__(self, bot, cursor, cnx):
+        self.bot = bot
+        self.cursor = cursor
+        self.cnx = cnx
+
+    @commands.command()
+    async def add_user(self, ctx, display_name, email, admin):
+        """
+        Add a user to the LFJ backend
+        :param display_name: display name of new user
+        :param email: email of new user
+        :param admin: admin status of new user
+        :return: a message displaying the new user table or an error message
+        """
+        await ctx.send(sql_add_user(str(ctx.author), display_name.split('#')[1], display_name, email, admin,
+                                    self.cursor, self.cnx))
+
+    @commands.command()
+    async def delete_user(self, ctx, display_name):
+        await ctx.send(sql_delete_user(str(ctx.author), display_name, self.cursor, self.cnx))
+
+    @commands.command()
+    async def set_email(self, ctx, display_name, email):
+        await ctx.send(sql_set_email(str(ctx.author), display_name, email, self.cursor, self.cnx))
+
+    @commands.command()
+    async def set_admin_status(self, ctx, display_name, status):
+        await ctx.send(sql_set_admin_status(str(ctx.author), display_name, status, self.cursor, self.cnx))
+
+    @commands.command()
+    async def query_user(self, ctx, user):
+        await ctx.send(sql_query_user(user, self.cursor))
+
+
+# SQL FUNCTIONS #
+
+
+def sql_query_user(argument, cursor):
     """
     Query information from the user table.
     :param argument: either ALL (for a select * from user query) or a display name (for getting information about a
@@ -14,7 +55,7 @@ def query_user(argument, cursor):
         return cursor.fetchall()
 
 
-def delete_user(auth_user, display_name, cursor, cnx):
+def sql_delete_user(auth_user, display_name, cursor, cnx):
     """
     Delete a row from the user table based on display name.
     :param auth_user: user who is authorizing the delete
@@ -37,11 +78,11 @@ def delete_user(auth_user, display_name, cursor, cnx):
     return cursor.fetchall()
 
 
-def add_user(auth_user, id, display_name, email, is_admin, cursor, cnx):
+def sql_add_user(auth_user, user_id, display_name, email, is_admin, cursor, cnx):
     """
     Add a user to the user table.
     :param auth_user: user authorizing add
-    :param id: numeric id of user
+    :param user_id: numeric id of user
     :param display_name: display name of user
     :param email: email of user
     :param is_admin: admin status of new user
@@ -55,14 +96,14 @@ def add_user(auth_user, id, display_name, email, is_admin, cursor, cnx):
 
     cursor.execute('insert into user '
                    '(user_id, display_name, e_mail, admin) '
-                   'values (%s, %s, %s, %s)', (id, display_name, email, is_admin))
+                   'values (%s, %s, %s, %s)', (user_id, display_name, email, is_admin))
     cnx.commit()        # commit changes to database
 
     cursor.execute('select * from user')        # get new user table
     return cursor.fetchall()
 
 
-def set_email(auth_user, display_name, email, cursor, cnx):
+def sql_set_email(auth_user, display_name, email, cursor, cnx):
     """
     Update the email associated with a user.
     :param auth_user: user authorizing change
@@ -84,7 +125,7 @@ def set_email(auth_user, display_name, email, cursor, cnx):
     return cursor.fetchall()
 
 
-def set_admin_status(auth_user, display_name, new_status, cursor, cnx):
+def sql_set_admin_status(auth_user, display_name, new_status, cursor, cnx):
     """
     Update the admin status associated with a user.
     :param auth_user: user authorizing change
@@ -109,7 +150,7 @@ def set_admin_status(auth_user, display_name, new_status, cursor, cnx):
     return cursor.fetchall()
 
 
-def set_membership(auth_user, game_name, skill_level, cursor, cnx):
+def sql_set_membership(auth_user, game_name, skill_level, cursor, cnx):
     """
     Sets a users membership with a particular game
     :param auth_user: user authorizing change

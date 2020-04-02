@@ -1,7 +1,8 @@
 import configparser
 from discord.ext import commands
 import mysql.connector
-import user_queries
+from user_queries import UserQueries
+from game_queries import GameQueries
 
 
 def main():
@@ -48,36 +49,21 @@ def main():
 
         event_created = True
 
-    # BOT COMMANDS #
+    # EXIT COMMAND #
 
-    @client.command()
-    async def exit(ctx):
+    @client.command(name='exit')
+    async def bot_exit(ctx):
+        """
+        Prompt bot to logout
+        :return: none
+        """
         cursor.close()
         cnx.close()
         await client.logout()  # log the bot out
 
-    @client.command()
-    async def add_user(ctx, display_name, email, admin):
-        await ctx.send(user_queries.add_user(str(ctx.author), display_name.split('#')[1], display_name, email, admin,
-                                             cursor, cnx))
-
-    @client.command()
-    async def delete_user(ctx, display_name):
-        await ctx.send(user_queries.delete_user(str(ctx.author), display_name, cursor, cnx))
-
-    @client.command()
-    async def set_email(ctx, display_name, email):
-        await ctx.send(user_queries.set_email(str(ctx.author), display_name, email, cursor, cnx))
-
-    @client.command()
-    async def set_admin_status(ctx, display_name, status):
-        await ctx.send(user_queries.set_admin_status(str(ctx.author), display_name, status, cursor, cnx))
-
-    @client.command()
-    async def query_user(ctx, user):
-        await ctx.send(user_queries.query_user(user, cursor))
-
     # RUN THE BOT #
+    client.add_cog(UserQueries(client, cursor, cnx))
+    client.add_cog(GameQueries(client, cursor, cnx))
     client.run(token)
 
 

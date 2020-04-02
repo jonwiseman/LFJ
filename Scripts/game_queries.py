@@ -1,73 +1,49 @@
-import configparser
-import mysql.connector
-import discord
+from discord.ext import commands
 
 
-def main(argc, argv):
-    config = configparser.ConfigParser()  # read and parse the config file
-    config.read(r'../configuration.conf')
+class GameQueries(commands.Cog):
+    def __init__(self, bot, cursor, cnx):
+        self.bot = bot
+        self.cursor = cursor
+        self.cnx = cnx
 
-    username = config['Database']['username']  # get details for signing in to database
-    password = config['Database']['password']
-    host = config['Database']['host']
-    database = config['Database']['database']
+    @commands.command()
+    async def add_game(self, ctx, game_id, name):
+        await ctx.send(sql_add_game(str(ctx.author), game_id, name, self.cursor, self.cnx))
 
-    try:  # try connecting to the database
-        cnx = mysql.connector.connect(user=username,
-                                      password=password,
-                                      host=host,
-                                      database=database)
-    except mysql.connector.Error:  # catch connection errors
-        return 1
-    else:  # if successful in connecting, create a cursor object
-        cursor = cnx.cursor()
+    @commands.command()
+    async def delete_game(self, ctx, name):
+        await ctx.send(sql_delete_game(str(ctx.author), name, self.cursor, self.cnx))
 
-    command = argv[0]  # get the command entered by the user
+    @commands.command()
+    async def edit_name(self, ctx, old_name, new_name):
+        await ctx.send(sql_edit_name(str(ctx.author), old_name, new_name, self.cursor, self.cnx))
 
-    if command == 'add_game':
-        if argc != 4:
-            return 1
-        data_insert = {
-            'game_id': argv[1],
-            'name': argv[2]
-        }
-        return add_game(str(argv[-1]), data_insert, cursor, cnx)
-    elif command == 'query_game':
-        if argc != 3:
-            return 1
-        return query_game(argv[-2], cursor)
-    elif command == 'delete_game':
-        if argc != 3:
-            return 1
-        return delete_game(str(argv[-1]), argv[-2], cursor, cnx)
-    elif command == 'set_game_name':
-        if argc != 4:
-            return 1
-        return edit_name(str(argv[-1]), argv[-3], argv[-2], cursor, cnx)
-    elif command == 'set_game_id':
-        if argc != 4:
-            return 1
-        return edit_id(str(argv[-1]), argv[1], argv[-2], cursor, cnx)
-    else:
-        return 1
+    @commands.command()
+    async def edit_id(self, ctx, name, game_id):
+        await ctx.send(sql_edit_id(str(ctx.author), name, game_id, self.cursor, self.cnx))
+
+    @commands.command()
+    async def query_game(self, ctx, name):
+        await ctx.send(sql_query_game(name, self.cursor))
 
 
-def add_game(auth_user, data_insert, cursor, cnx):
+def sql_add_game(auth_user, game_id, name, cursor, cnx):
     admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
     if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
         return 1
 
     cursor.execute('insert into game '
                    '(game_id, name) '
-                   'values (%(game_id)s, %(name)s)', data_insert)  # add new user
+                   'values (%s, %s)', (game_id, name))  # add new user
     cnx.commit()  # commit changes to database
 
     cursor.execute('select * from game')  # get new user table
     return cursor.fetchall()
 
 
-def query_game(argument, cursor):
-    if argument == 'ALL':
+def sql_query_game(argument, cursor):
+    if argument.upper() == 'ALL':
         cursor.execute('select * from game')
         return cursor.fetchall()
     else:
@@ -75,7 +51,7 @@ def query_game(argument, cursor):
         return cursor.fetchall()
 
 
-def delete_game(auth_user, name, cursor, cnx):
+def sql_delete_game(auth_user, name, cursor, cnx):
     admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
     if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
         return 1
@@ -86,7 +62,7 @@ def delete_game(auth_user, name, cursor, cnx):
     return cursor.fetchall()
 
 
-def edit_name(auth_user, old_name, new_name, cursor, cnx):
+def sql_edit_name(auth_user, old_name, new_name, cursor, cnx):
     admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
     if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
         return 1
@@ -99,14 +75,14 @@ def edit_name(auth_user, old_name, new_name, cursor, cnx):
     return cursor.fetchall()
 
 
-def edit_id(auth_user, name, id, cursor, cnx):
+def sql_edit_id(auth_user, name, game_id, cursor, cnx):
     admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
     if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
         return 1
 
     cursor.execute('update game '
                    'set game_id = %s '
-                   'where name = %s', (id, name))  # change the game table with new email
+                   'where name = %s', (game_id, name))  # change the game table with new email
     cnx.commit()  # commit changes to user table
     cursor.execute('select * from game')  # get new user table
     return cursor.fetchall()
@@ -126,7 +102,3 @@ def check_admin_status(display_name, cursor):
         return -1
 
     return result[0][0]     # return 0 or 1
-
-
-if __name__ == '__main__':
-    main(0, [])
