@@ -1,60 +1,3 @@
-import configparser
-import mysql.connector
-
-
-def main(argc, argv):
-    config = configparser.ConfigParser()        # read and parse the config file
-    config.read(r'../configuration.conf')
-
-    username = config['Database']['username']       # get details for signing in to database
-    password = config['Database']['password']
-    host = config['Database']['host']
-    database = config['Database']['database']
-
-    try:        # try connecting to the database
-        cnx = mysql.connector.connect(user=username,
-                                      password=password,
-                                      host=host,
-                                      database=database)
-    except mysql.connector.Error:       # catch connection errors
-        return 1
-    else:       # if successful in connecting, create a cursor object
-        cursor = cnx.cursor()
-
-    command = argv[0]       # get the command entered by the user
-    if command == 'query_user':
-        if argc > 3:        # syntax dictates 2 arguments (command, ALL/USER); third argument is the user who requested
-            return 1
-        return query_user(argv[1], cursor)
-    elif command == 'add_user':
-        if argc != 5:       # syntax dictates 4 arguments (command, user id, display name, admin status)
-            return 1
-        data_insert = {     # prepare data for insertion into database
-            'user_id': argv[1].split('#')[1],       # get the integer ID from the display name
-            'display_name': argv[1],        # display name passed by user
-            'e_mail': argv[2],      # e-mail entered by user
-            'admin': argv[3]        # admin status entered by user
-        }
-        return add_user(str(argv[-1]), data_insert, cursor, cnx)
-    elif command == 'delete_user':
-        if argc != 3:       # syntax dictates 2 arguments (command, display name)
-            return 1
-        return delete_user(str(argv[-1]), argv[1], cursor, cnx)
-    elif command == 'set_email':
-        if argc != 4:       # syntax dictates 3 arguments (command, display name, new email)
-            return 1
-        return set_email(str(argv[-1]), argv[1], argv[2], cursor, cnx)
-    elif command == 'set_admin':
-        if argc != 4:       # syntax dictates 3 arguments (command, display name, admin status)
-            return 1
-        return set_admin_status(str(argv[-1]), argv[1], argv[2].lower(), cursor, cnx)
-    elif command == 'set_skill':
-        if argc != 4:       # syntax dictates 3 arguments (command, game name, skill level)
-            return 1
-        return set_membership(argv[-1], argv[1], argv[2], cursor, cnx)
-    cnx.close()     # close the connection to the database
-
-
 def query_user(argument, cursor):
     """
     Query information from the user table.
@@ -63,7 +6,7 @@ def query_user(argument, cursor):
     :param cursor: cursor to execute queries
     :return: The result of the select statement
     """
-    if argument == 'ALL':
+    if argument.upper() == 'ALL':
         cursor.execute('select * from user')
         return cursor.fetchall()
     else:
@@ -94,11 +37,14 @@ def delete_user(auth_user, display_name, cursor, cnx):
     return cursor.fetchall()
 
 
-def add_user(auth_user, data_insert, cursor, cnx):
+def add_user(auth_user, id, display_name, email, is_admin, cursor, cnx):
     """
     Add a user to the user table.
     :param auth_user: user authorizing add
-    :param data_insert: dictionary of data to be inserted (user id, display name, email, and admin status)
+    :param id: numeric id of user
+    :param display_name: display name of user
+    :param email: email of user
+    :param is_admin: admin status of new user
     :param cursor: cursor for executing query
     :param cnx: connection object for committing change
     :return: the new table after insertion or an error flag
@@ -109,7 +55,7 @@ def add_user(auth_user, data_insert, cursor, cnx):
 
     cursor.execute('insert into user '
                    '(user_id, display_name, e_mail, admin) '
-                   'values (%(user_id)s, %(display_name)s, %(e_mail)s, %(admin)s)', data_insert)        # add new user
+                   'values (%s, %s, %s, %s)', (id, display_name, email, is_admin))
     cnx.commit()        # commit changes to database
 
     cursor.execute('select * from user')        # get new user table
@@ -262,7 +208,3 @@ def get_game_id(game_name, cursor):
         return -1
 
     return result[0][0]     # return game id
-
-
-if __name__ == '__main__':
-    main(0, [])
