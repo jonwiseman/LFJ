@@ -92,7 +92,8 @@ These are queries that allow interaction with the event and registration tables:
 **Membership Queries**  
 These are queries that allow interaction with the membership table:  
 
-16. set_skill
+16. create_membership  
+17. delete_membership  
 
 **Miscelanious Commands**  
 
