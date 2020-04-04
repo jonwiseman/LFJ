@@ -13,6 +13,13 @@ class EventQueries(commands.Cog):
 
     @commands.command()
     async def create_event(self, ctx, event_title, event_date, game_name):
+        """
+        Create new event
+        :param event_title: title of event
+        :param event_date: date of event (formatted DD/MM/YYYY)
+        :param game_name: title of game to be played
+        :return: new event table or error message
+        """
         game_id = get_game_id(game_name, self.cursor)
         if game_id is None:
             return 1
@@ -27,23 +34,48 @@ class EventQueries(commands.Cog):
 
     @commands.command()
     async def delete_event(self, ctx, title):
+        """
+        Delete an event
+        :param title: title of event
+        :return: new event table or error message
+        """
         await ctx.send(sql_delete_event(str(ctx.author), title, self.cursor, self.cnx))
 
     @commands.command()
     async def get_events(self, ctx):
+        """
+        Get all events
+        :return: list of all scheduled events
+        """
         await ctx.send(sql_get_events(self.cursor))
 
     @commands.command()
     async def create_registration(self, ctx, event_name):
+        """
+        Register for an event
+        :param event_name: event's title
+        :return: new count of event registrations
+        """
         await ctx.send(sql_create_registration(event_name, str(ctx.author), self.cursor, self.cnx))
 
     @commands.command()
     async def delete_registration(self, ctx, event_name):
+        """
+        Cancel a registration
+        :param event_name: name of event to cancel registration for
+        :return: new count of event registrations
+        """
         await ctx.send(sql_delete_registration(event_name, str(ctx.author), self.cursor, self.cnx))
 
     @commands.command()
-    async def query_event(self, ctx,event_name):
+    async def query_event(self, ctx, event_name):
+        """
+        Inspect an event
+        :param event_name: event's title
+        :return: information about that event
+        """
         await ctx.send(sql_query_event(event_name, self.cursor))
+
 
 def parse_creation_message(message):
     """
@@ -108,7 +140,7 @@ def sql_get_events(cursor):
         'game.name from event inner join game on event.game_id = game.game_id'
         )
     event_list = '\n'.join(['\t'.join([str(e) for e in lne]) for lne in cursor.fetchall()])
-    return 'Event ID\tDate\tEvent Title\tGame\n'+ event_list
+    return 'Event ID\tDate\tEvent Title\tGame\n' + event_list
 
 
 def sql_create_registration(title, user, cursor, cnx):

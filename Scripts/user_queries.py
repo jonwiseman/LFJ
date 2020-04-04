@@ -21,23 +21,41 @@ class UserQueries(commands.Cog):
 
     @commands.command()
     async def delete_user(self, ctx, display_name):
+        """
+        Delete a user from LFJ backend
+        :param display_name: display name of user to be deleted
+        :return:  a message displaying the new user table or an error message
+        """
         await ctx.send(sql_delete_user(str(ctx.author), display_name, self.cursor, self.cnx))
 
     @commands.command()
     async def set_email(self, ctx, display_name, email):
+        """
+        Update a user's email
+        :param display_name: display name of user
+        :param email: new email for user
+        :return: a message displaying the new user table or an error message
+        """
         await ctx.send(sql_set_email(str(ctx.author), display_name, email, self.cursor, self.cnx))
 
     @commands.command()
     async def set_admin_status(self, ctx, display_name, status):
+        """
+        Update a user's admin status
+        :param display_name: display name of user to be updated
+        :param status: TRUE|FALSE
+        :return: the updated user table or an error message
+        """
         await ctx.send(sql_set_admin_status(str(ctx.author), display_name, status, self.cursor, self.cnx))
 
     @commands.command()
     async def query_user(self, ctx, user):
+        """
+        Get information about users
+        :param user: ALL|DISPLAY_NAME
+        :return: result of query
+        """
         await ctx.send(sql_query_user(user, self.cursor))
-
-    @commands.command()
-    async def delete_membership(self, ctx, display_name, game_name):
-        await ctx.send(sql_delete_membership(display_name, game_name, self.cursor, self.cnx))
 
 
 # SQL FUNCTIONS #
@@ -154,70 +172,6 @@ def sql_set_admin_status(auth_user, display_name, new_status, cursor, cnx):
     return cursor.fetchall()
 
 
-def sql_set_membership(auth_user, game_name, skill_level, cursor, cnx):
-    """
-    Sets a users membership with a particular game
-    :param auth_user: user authorizing change
-    :param game_name: name of game user wants to set skill_level for
-    :param skill_level: the level of skill the user holds in a game
-    :param cursor: cursor object for executing queries
-    :param cnx: connection object to commit changes
-    :return: 1 if there is an error, response text if successful
-    """
-    user_id = get_user_id(auth_user, cursor)  # gets user_id from display_name
-
-    if user_id == -1:  # user not found
-        return 1
-
-    game_id = get_game_id(game_name, cursor)  # gets game_id from game_name
-
-    if game_id == -1:  # game not found
-        return 1
-
-    if check_membership(user_id, game_id, cursor) == -1:  # user does not hold membership of game
-        cursor.execute('insert into membership '
-                       '(user_id, game_id, skill_level) '
-                       'values (%s, %s, %s)', (user_id, game_id, skill_level))
-    else:
-        cursor.execute('update membership '
-                       'set skill_level = %s '
-                       'where user_id = %s and game_id = %s',
-                       (skill_level, user_id, game_id,))  # bug fixed Bowler 03/30/2020
-    cnx.commit()  # commit changes to membership table
-
-    return "Successfully updated your skill level to " + skill_level + " for " + game_id
-
-
-def sql_delete_membership(auth_user, game_name, cursor, cnx):
-    """
-    Delete a users membership with a particular game
-    :param auth_user: user authorizing change
-    :param game_name: name of game user wants to set skill_level for
-    :param cursor: cursor object for executing queries
-    :param cnx: connection object to commit changes
-    :return: 1 if there is an error, response text if successful
-    """
-    user_id = get_user_id(auth_user, cursor)  # gets user_id from display_name
-
-    if user_id == -1:  # user not found
-        return 1
-
-    game_id = get_game_id(game_name, cursor)  # gets game_id from game_name
-
-    if game_id == -1:  # game not found
-        return 1
-
-    if check_membership(user_id, game_id, cursor) == -1:  # user does not hold membership of game
-        return 1
-    else:
-        cursor.execute('delete from membership '
-                       'where user_id = %s and game_id = %s',
-                       (user_id, game_id,))
-    cnx.commit()  # commit changes to membership table
-
-    return "Deleted " + auth_user + " from " + game_name
-
-
 # HELPER FUNCTIONS #
 
 
@@ -235,36 +189,3 @@ def check_admin_status(display_name, cursor):
         return -1
 
     return result[0][0]  # return 0 or 1
-
-
-def check_membership(user_id, game_id, cursor):
-    """
-    Check to see if a given user has membership to a game
-    :param user_id: user id to check
-    :param game_id: game id to check
-    :param cursor: cursor object for executing search query
-    :return: -1 if membership does not exist, 1 if user has membership to given game
-    """
-    cursor.execute('select user_id from membership where user_id = %s and game_id = %s', (user_id, game_id))
-    result = cursor.fetchall()
-
-    if len(result) == 0:  # user not found
-        return -1
-
-    return result[0][0]  # return user id
-
-
-def get_user_id(display_name, cursor):
-    """
-    Gets a user id from display name of a user
-    :param display_name: display name of user whose id will be gotten
-    :param cursor: cursor object for executing search query
-    :return: -1 if user does not exist, user_id if user is found
-    """
-    cursor.execute('select user_id from user where display_name = %s', display_name)
-    result = cursor.fetchall()
-
-    if len(result) == 0:  # user not found
-        return -1
-
-    return result[0][0]  # return user id
