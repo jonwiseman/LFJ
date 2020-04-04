@@ -60,29 +60,49 @@ The next step is to initialize the backend database.  Open MySQL (either through
 The bot's functionality is divided into modules: each script in the LFJ/Scripts folder controls one of the bot's functions (such as querying the user table or adding events).  To run the bot, you need only run bot_controller.py.  After the bot is running, you should see his status turn to green in Discord.  Do not interact with the bot via the command line; after the bot is started, only send it commands via Discord.  A list of commands you can use to interact with the bot are available in the [Available Commands](https://github.com/jonwiseman/LFJ/wiki/2.-Available-Commands) section.
 
 ## Available Commands  
-There are sixteen commands available in LFJ right now:
+There are eighteen commands available in LFJ right now, organized into 5 categories:
+
+**User Queries**  
+These are queries that allow interaction with the user table:  
 
 1. add_user
 2. delete_user
 3. query_user
 4. set_email
 5. set_admin
-6. set_skill
-7. create_event  
-8. delete_event  
-9. get_events  
-10. help  
-11. add_game  
-12. delete_game  
-13. query_game  
-14. set_game_name  
-15. get_events  
-16. query_event
+
+**Game Queries**  
+These are queries that allow interaction with the game table:  
+
+6. add_game  
+7. delete_game  
+8. query_game  
+9. set_game_name  
+
+**Event Queries**  
+These are queries that allow interaction with the event and registration tables:  
+
+10. create_event  
+11. delete_event  
+12. get_events  
+13. query_event  
+14. create_registration  
+15. delete_registration  
+
+**Membership Queries**  
+These are queries that allow interaction with the membership table:  
+
+16. set_skill
+
+**Miscelanious Commands**  
+
+17. help  
+18. exit
 
 **Adding a new user**     
 The add_user command can be used to add a new user to LFJ's database.  This is the first step necessary for a user to be able to register in game groups and for events.  Please note that the adding user MUST be an admin.  The syntax for this command is as follows:  
 
-`@LFJ add_user DISPLAY_NAME EMAIL ADMIN`
+`$add_user DISPLAY_NAME EMAIL ADMIN`
 
 DISPLAY_NAME: the user's Discord display name (mine is jon_wiseman#8494)  
 EMAIL: the user's email  
@@ -91,19 +111,19 @@ ADMIN: the user's admin status (0 or 1).  Please note that a user with admin sta
 **Deleting a User**    
 The delete_user command can be used to delete a user from LFJ's database.  Please note that the user doing the deleting MUST be an admin, and that an admin cannot be deleted from the database.  The syntax for this command is as follows:  
 
-`@LFJ delete_user DISPLAY_NAME`
+`$delete_user DISPLAY_NAME`
 
 DISPLAY_NAME: the user's Discord display name  
 
 **Querying for a User**    
 The query_user command requires one of two additional arguments: either ALL or a DISPLAY_NAME.  If ALL is entered, then the bot will return a list of all users in the database; if a DISPLAY_NAME is entered, then only that user's information will be returned.  The syntax for this command is as follows:  
 
-`@LFJ query_user [ALL|DISPLAY_NAME]`
+`$query_user [ALL|DISPLAY_NAME]`
 
 **Setting a User's Email**    
 This command can be used to update a user's email.  Please note that only an admin can update a user's information.  The syntax for this command is as follows:  
 
-`@LFJ set_email DISPLAY_NAME EMAIL`  
+`$set_email DISPLAY_NAME EMAIL`  
 
 DISPLAY_NAME: Discord display name of the user whose email will be updated  
 EMAIL: new email for the user
@@ -111,20 +131,51 @@ EMAIL: new email for the user
 **Setting a User's Admin Status**  
 This command can be used to update a user's admin status. Please not that only an admin can update another user's admin status. The syntax for this command is as follows:
 
-`@LFJ set_admin DISPLAY_NAME [TRUE|FALSE]`  
+`$set_admin DISPLAY_NAME [TRUE|FALSE]`  
 
-**Setting a User's Game Skill**  
-This command can be used to update a user's skill level for a given game. The syntax for this command is as follows:
+**Adding a new Game**  
+The add_game command can be used to add a new game to the bot's backend.  Please note that the requesting user must be an administrator to successfully add a new game.  The syntax for this command is as follows:  
 
-`@LFJ set_skill GAME SKILL_LEVEL`
+`$add_game ID NAME`  
 
-GAME: game name for updating skill level (CSGO, LOL, RL)  
-SKILL_LEVEL: skill ranking for game being updated (NUMERIC)  
+ID: numeric ID for game  
+NAME: string name of game  
+
+**Deleting a Game**  
+The delete_game command can be used to delete a game from the bot's backend.  Please note that the requesting user must be an administrator to successfully delete a game.  The syntax for this command is as follows:  
+
+`$delete_game NAME`  
+
+NAME: string name of game to be deleted
+
+**Querying for a Game**  
+The query_game command can be used to get information about one specific game or all games in the bot's database.  The syntax for this command is as follows:  
+
+`$query_game [ALL/NAME]`
+
+ALL: to query all games in the database  
+NAME: name of specific game to query  
+
+**Editing a Game's ID**  
+The set_game_id command can be used to edit a game's numeric ID.  Please note that the requesting user must be an admin in order to successfully edit a game's information.  The syntax for this command is as follows:  
+
+`$set_game_id NAME NEW_ID`
+
+NAME: game's string name for identification  
+NEW_ID: new numeric ID of game  
+
+**Editing a Game's Name**
+The set_game_name command can be used to edit a game's name.  Please note that the requesting user must be an admin in order to successfully edit a game's information.  The syntax for this command is as follows:  
+
+`$set_game_name OLD_NAME NEW_NAME`  
+
+OLD_NAME: old string name of game  
+NEW_NAME: new string name of game
 
 **Creating a New Event**  
 The create_event command can be used to create a new event, and requires three positional arguments: an event title (must be one token), an event date (formatted as MM/DD/YYYY), and a game title.  Right now, any user can create an event.  The syntax for this command is as follows:  
 
-`@LFJ create_event TITLE DATE GAME`  
+`$create_event TITLE DATE GAME`  
 
 TITLE: event's title  
 DATE: event's date (formatted MM/DD/YYYY)  
@@ -133,64 +184,54 @@ GAME: game's title (must match what is in the database)
 **Deleting an Event**  
 The delete_event command delete's an event from the LFJ database; it requires one positional argument: event title (must be one token).  Only an admin user can delete an event.  The syntax for this command is as follows:  
 
-`@LFJ delete_event TITLE`
+`$delete_event TITLE`
 
 TITLE: event's title
 
 **See all Events**  
 The get_events command returns all events in the LFJ database; it does not require any positional arguments.  The syntax for this command is as follows:  
 
-`@LFJ get_events`
+`$get_events`
+
+**Getting Information about an Event**  
+The query_event command returns information about a specific event.  The syntax for this command is as follows:
+
+`$query_event TITLE`
+
+TITLE: event's title  
+
+**Registering for an Event**  
+The create_registration command registers a user for an event.  The syntax for this command is as follows:
+
+`$create_registration TITLE`
+
+TITLE: event's title
+
+**Cancelling a Registration**  
+The delete_registration command removes a user's event registration.  The syntax for this command is as follows:  
+
+`$delete_registration TITLE`
+
+TITLE: event's title
+
+**Setting a User's Game Skill**  
+This command can be used to update a user's skill level for a given game. The syntax for this command is as follows:
+
+`$set_skill GAME SKILL_LEVEL`
+
+GAME: game name for updating skill level (CSGO, LOL, RL)  
+SKILL_LEVEL: skill ranking for game being updated (NUMERIC)  
 
 **Getting Help**  
 The help command can be used to get help from the bot regarding available commands and specific command syntax.  Running the command without supplying an additional argument will return a list of all available commands. The syntax for this command is as follows:  
 
-`@LFJ help [COMMAND]`
+`$help [COMMAND]`
 
 COMMAND: (optional) specific command to get help for  
-
-**Adding a new Game**  
-The add_game command can be used to add a new game to the bot's backend.  Please note that the requesting user must be an administrator to successfully add a new game.  The syntax for this command is as follows:  
-
-`@LFJ add_game ID NAME`  
-
-ID: numeric ID for game  
-NAME: string name of game  
-
-**Deleting a Game**  
-The delete_game command can be used to delete a game from the bot's backend.  Please note that the requesting user must be an administrator to successfully delete a game.  The syntax for this command is as follows:  
-
-`@LFJ delete_game NAME`  
-
-NAME: string name of game to be deleted
-
-**Querying for a Game**  
-The query_game command can be used to get information about one specific game or all games in the bot's database.  The syntax for this command is as follows:  
-
-`@LFJ query_game [ALL/NAME]`
-
-ALL: to query all games in the database  
-NAME: name of specific game to query  
-
-**Editing a Game's ID**  
-The set_game_id command can be used to edit a game's numeric ID.  Please note that the requesting user must be an admin in order to successfully edit a game's information.  The syntax for this command is as follows:  
-
-`@LFJ set_game_id NAME NEW_ID`
-
-NAME: game's string name for identification  
-NEW_ID: new numeric ID of game  
-
-**Editing a Game's Name**
-The set_game_name command can be used to edit a game's name.  Please note that the requesting user must be an admin in order to successfully edit a game's information.  The syntax for this command is as follows:  
-
-`@LFJ set_game_name OLD_NAME NEW_NAME`  
-
-OLD_NAME: old string name of game  
-NEW_NAME: new string name of game
 
 **Querying for a Specific Event**  
 The query_event command can be used to get information about a specific event.  The syntax for this command is as follows:  
 
-`@LFJ query_event NAME`
+`$query_event NAME`
 
 NAME: string name of the event about which to get information
