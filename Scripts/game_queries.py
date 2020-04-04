@@ -27,6 +27,10 @@ class GameQueries(commands.Cog):
     async def query_game(self, ctx, name):
         await ctx.send(sql_query_game(name, self.cursor))
 
+    @commands.command()
+    async def list_games(self,ctx):
+        await ctx.send(sql_list_games(self.cursor))
+
 
 def sql_add_game(auth_user, game_id, name, cursor, cnx):
     admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
@@ -88,6 +92,16 @@ def sql_edit_id(auth_user, name, game_id, cursor, cnx):
     return cursor.fetchall()
 
 
+def sql_list_games(cursor):
+    cursor.execute('select game_id, name from game')
+    result = cursor.fetchall()
+
+    msg = 'ID\tName\n'
+    for record in result:
+        msg += '%d\t%s\n' % record
+    return msg
+
+
 def check_admin_status(display_name, cursor):
     """
     Check to see if a given user is an admin.  Only admins can change the database.
@@ -102,3 +116,19 @@ def check_admin_status(display_name, cursor):
         return -1
 
     return result[0][0]     # return 0 or 1
+
+
+def get_game_id(game_name, cursor):
+    """
+    Gets a game id from game name
+    :param game_name: name of a game to get id for
+    :param cursor: cursor object for executing search query
+    :return: -1 if game does not exist, game_id if game is found
+    """
+    cursor.execute('select game_id from game where name = %s', game_name.lower())
+    result = cursor.fetchall()
+
+    if len(result) == 0:  # game not found
+        return -1
+
+    return result[0][0]  # return game id

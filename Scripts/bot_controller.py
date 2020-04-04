@@ -3,6 +3,7 @@ from discord.ext import commands
 import mysql.connector
 from user_queries import UserQueries
 from game_queries import GameQueries
+from event_queries import EventQueries
 
 
 def main():
@@ -64,6 +65,7 @@ def main():
     # RUN THE BOT #
     client.add_cog(UserQueries(client, cursor, cnx))
     client.add_cog(GameQueries(client, cursor, cnx))
+    client.add_cog(EventQueries(client, cursor, cnx))
     client.run(token)
 
 
