@@ -99,6 +99,8 @@ These are queries that allow interaction with the membership table:
 17. help  
 18. exit
 
+---
+
 **Adding a new user**     
 The add_user command can be used to add a new user to LFJ's database.  This is the first step necessary for a user to be able to register in game groups and for events.  Please note that the adding user MUST be an admin.  The syntax for this command is as follows:  
 
