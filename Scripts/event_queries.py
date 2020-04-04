@@ -1,6 +1,3 @@
-import configparser
-import mysql.connector
-import discord
 import re
 import time
 from datetime import date
@@ -16,15 +13,16 @@ class EventQueries(commands.Cog):
 
     @commands.command()
     async def create_event(self, ctx, event_title, event_date, game_name):
-        game_id = get_game_id(game_name,self.cursor)
+        game_id = get_game_id(game_name, self.cursor)
         if game_id is None:
             return 1
         data_insert = {  # prepare data insert
-            'event_id': 2,  #NOT SURE WHERE TO GET THIS FROM SEND HELP PLEASE
+            'event_id': ctx.message.id,
             'date': date.fromtimestamp(int(time.mktime(time.strptime(event_date, '%m/%d/%Y')))),  # create date
             'game_id': game_id,  # get game's ID number
             'title': event_title,  # event's title
         }
+
         await ctx.send(sql_create_event(data_insert, self.cursor, self.cnx))
 
     @commands.command()
@@ -109,7 +107,7 @@ def sql_get_events(cursor):
         'select event_id, DATE_FORMAT(event.date,"%M %d %Y"), event.title, '
         'game.name from event inner join game on event.game_id = game.game_id'
         )
-    event_list = '\n'.join([ '\t'.join([str(e) for e in lne]) for lne in cursor.fetchall()])
+    event_list = '\n'.join(['\t'.join([str(e) for e in lne]) for lne in cursor.fetchall()])
     return 'Event ID\tDate\tEvent Title\tGame\n'+ event_list
 
 
@@ -138,7 +136,7 @@ def sql_create_registration(title, user, cursor, cnx):
                    '(user_id, event_id) '
                    'values (%s, %s)', (user_id, event_id,))  # add new event
     cnx.commit()  # commit changes to database
-    cursor.execute('select count(*) from registration where event_id = %s', (event_id,))  # get new user table
+    cursor.execute('select count(*) from registration where event_id = %s', (event_id,))        # Get registration count
     result = cursor.fetchall()
     print(result)
     return result
@@ -166,7 +164,7 @@ def sql_delete_registration(title, user, cursor, cnx):
     event_id = result[0][0]
 
     cursor.execute('delete from registration where '
-                   'user_id = %s and event_id = %s) ', (user_id, event_id,))  # delete user registration
+                   'user_id = %s and event_id = %s', (user_id, event_id,))  # delete user registration
     cnx.commit()  # commit changes to database
     cursor.execute('select count(*) from registration where event_id = %s', (event_id,))  # get count of registered user
     return cursor.fetchall()
@@ -191,7 +189,3 @@ def check_admin_status(display_name, cursor):
         return -1
 
     return result[0][0]     # return 0 or 1
-
-
-if __name__ == '__main__':
-    main(0, [])

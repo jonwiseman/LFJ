@@ -268,5 +268,3 @@ def get_user_id(display_name, cursor):
         return -1
 
     return result[0][0]  # return user id
-
-

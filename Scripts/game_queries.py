@@ -125,7 +125,7 @@ def get_game_id(game_name, cursor):
     :param cursor: cursor object for executing search query
     :return: -1 if game does not exist, game_id if game is found
     """
-    cursor.execute('select game_id from game where name = %s', game_name.lower())
+    cursor.execute('select game_id from game where name = %s', (game_name.lower(),))
     result = cursor.fetchall()
 
     if len(result) == 0:  # game not found
