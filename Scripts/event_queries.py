@@ -205,19 +205,3 @@ def sql_delete_registration(title, user, cursor, cnx):
 def sql_query_event(title, cursor):
     cursor.execute('select * from event where title = %s', (title,))
     return cursor.fetchall()
-
-
-def check_admin_status(display_name, cursor):
-    """
-    Check to see if a given user is an admin.  Only admins can change the database.
-    :param display_name: display name of requesting user
-    :param cursor: cursor object for executing search query
-    :return: 0 if the user is not an admin (or does not exist) or 1 if the user is an admin
-    """
-    cursor.execute('select admin from user where display_name = %s', (display_name,))
-    result = cursor.fetchall()
-
-    if len(result) == 0:        # user not found
-        return -1
-
-    return result[0][0]     # return 0 or 1

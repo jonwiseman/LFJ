@@ -4,6 +4,7 @@ import mysql.connector
 from user_queries import UserQueries
 from game_queries import GameQueries
 from event_queries import EventQueries
+from helper_commands import HelperCommands
 
 
 def main():
@@ -50,19 +51,8 @@ def main():
 
         event_created = True
 
-    # EXIT COMMAND #
-
-    @client.command(name='exit')
-    async def bot_exit(ctx):
-        """
-        Prompt bot to logout
-        :return: none
-        """
-        cursor.close()
-        cnx.close()
-        await client.logout()  # log the bot out
-
     # RUN THE BOT #
+    client.add_cog(HelperCommands(client, cursor, cnx))
     client.add_cog(UserQueries(client, cursor, cnx))
     client.add_cog(GameQueries(client, cursor, cnx))
     client.add_cog(EventQueries(client, cursor, cnx))
