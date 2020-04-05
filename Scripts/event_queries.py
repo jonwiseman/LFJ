@@ -1,62 +1,80 @@
-import configparser
-import mysql.connector
-import discord
 import re
 import time
 from datetime import date
+from discord.ext import commands
+from game_queries import get_game_id
 
 
-def main(argc, argv):
-    config = configparser.ConfigParser()  # read and parse the config file
-    config.read(r'../configuration.conf')
+class EventQueries(commands.Cog):
+    def __init__(self, bot, cursor, cnx):
+        self.bot = bot
+        self.cursor = cursor
+        self.cnx = cnx
 
-    username = config['Database']['username']  # get details for signing in to database
-    password = config['Database']['password']
-    host = config['Database']['host']
-    database = config['Database']['database']
-
-    try:        # try connecting to the database
-        cnx = mysql.connector.connect(user=username,
-                                      password=password,
-                                      host=host,
-                                      database=database)
-    except mysql.connector.Error:       # catch connection errors
-        return 1
-    else:       # if successful in connecting, create a cursor object
-        cursor = cnx.cursor()
-
-    command = argv[0]       # get the command entered by the user
-
-    if command == 'create_event':       # creating a new event
-        title, event_date, game_name = parse_creation_message(argv[1].content)      # parse creation message
-        game_id = get_game_id(game_name, cursor)        # get the game's id (to check if it exists and for insert)
-
-        if title == 1 or event_date == 1 or game_id is None:        # invalid details on any one of the params
+    @commands.command()
+    async def create_event(self, ctx, event_title, event_date, game_name):
+        """
+        Create new event
+        :param event_title: title of event
+        :param event_date: date of event (formatted DD/MM/YYYY)
+        :param game_name: title of game to be played
+        :return: new event table or error message
+        """
+        game_id = get_game_id(game_name, self.cursor)
+        if game_id is None:
             return 1
-
-        data_insert = {     # prepare data insert
-            'event_id': argv[1].id,     # get the event's ID (which is the creation message's ID)
-            'date': date.fromtimestamp(int(time.mktime(time.strptime(event_date, '%m/%d/%Y')))),        # create date
-            'game_id': game_id[0][0],       # get game's ID number
-            'title': title,     # event's title
+        data_insert = {  # prepare data insert
+            'event_id': ctx.message.id,
+            'date': date.fromtimestamp(int(time.mktime(time.strptime(event_date, '%m/%d/%Y')))),  # create date
+            'game_id': game_id,  # get game's ID number
+            'title': event_title,  # event's title
         }
 
-        return create_event(data_insert, cursor, cnx)       # create the event or return an error flag
-    elif command == 'delete_event':     # delete an event
-        if argc != 3:       # wrong number of parameters passed
-            return 1
-        return delete_event(str(argv[-1]), argv[-2], cursor, cnx)       # delete the event or return an error flag
-    elif command == 'get_events':       # get a list of all events
-        if argc != 2:       # wrong number of parameters passed
-            return 1
-        return qet_events(cursor)
-    elif command == 'query_event':
-        if argc != 3:
-            return 1
-        return query_event(argv[-2], cursor)
+        await ctx.send(sql_create_event(data_insert, self.cursor, self.cnx))
 
-    cursor.close()      # close the cursor
-    cnx.close()  # close the connection to the database
+    @commands.command()
+    async def delete_event(self, ctx, title):
+        """
+        Delete an event
+        :param title: title of event
+        :return: new event table or error message
+        """
+        await ctx.send(sql_delete_event(str(ctx.author), title, self.cursor, self.cnx))
+
+    @commands.command()
+    async def get_events(self, ctx):
+        """
+        Get all events
+        :return: list of all scheduled events
+        """
+        await ctx.send(sql_get_events(self.cursor))
+
+    @commands.command()
+    async def create_registration(self, ctx, event_name):
+        """
+        Register for an event
+        :param event_name: event's title
+        :return: new count of event registrations
+        """
+        await ctx.send(sql_create_registration(event_name, str(ctx.author), self.cursor, self.cnx))
+
+    @commands.command()
+    async def delete_registration(self, ctx, event_name):
+        """
+        Cancel a registration
+        :param event_name: name of event to cancel registration for
+        :return: new count of event registrations
+        """
+        await ctx.send(sql_delete_registration(event_name, str(ctx.author), self.cursor, self.cnx))
+
+    @commands.command()
+    async def query_event(self, ctx, event_name):
+        """
+        Inspect an event
+        :param event_name: event's title
+        :return: information about that event
+        """
+        await ctx.send(sql_query_event(event_name, self.cursor))
 
 
 def parse_creation_message(message):
@@ -75,18 +93,7 @@ def parse_creation_message(message):
         return title, date, game
 
 
-def get_game_id(game_name, cursor):
-    """
-    Query the game table to get the numeric ID associated with a game's name
-    :param game_name: name of the game
-    :param cursor: MySQL cursor for executing commands
-    :return: integer ID of game
-    """
-    cursor.execute('select game_id from game where name = %s', (game_name,))
-    return cursor.fetchall()
-
-
-def create_event(data_insert, cursor, cnx):
+def sql_create_event(data_insert, cursor, cnx):
     """
     Create a new event row in the event table.
     :param data_insert: prepared data insert (event's id, event's date, game's name, event's title)
@@ -103,7 +110,7 @@ def create_event(data_insert, cursor, cnx):
     return cursor.fetchall()
 
 
-def delete_event(auth_user, title, cursor, cnx):
+def sql_delete_event(auth_user, title, cursor, cnx):
     """
     Delete an event based on its title.
     :param auth_user: user requesting the delete (must be an admin to delete events)
@@ -122,17 +129,80 @@ def delete_event(auth_user, title, cursor, cnx):
     return cursor.fetchall()
 
 
-def qet_events(cursor):
+def sql_get_events(cursor):
     """
     Get all events in the event table
     :param cursor: MySQL cursor object for executing command and fetching results
     :return: all events in the event table
     """
-    cursor.execute('select * from event')
+    cursor.execute(
+        'select event_id, DATE_FORMAT(event.date,"%M %d %Y"), event.title, '
+        'game.name from event inner join game on event.game_id = game.game_id'
+        )
+    event_list = '\n'.join(['\t'.join([str(e) for e in lne]) for lne in cursor.fetchall()])
+    return 'Event ID\tDate\tEvent Title\tGame\n' + event_list
+
+
+def sql_create_registration(title, user, cursor, cnx):
+    """
+    Register user for event based on title
+    :param title: title of the event to register for
+    :param user: the user to register for
+    :param cursor: cursor object for executing command
+    :param cnx: connection object for verifying change
+    :return: count of users registered for the event
+    """
+    cursor.execute('select user_id from user where display_name = %s', (user,))
+    result = cursor.fetchall()
+    if len(result) == 0:  # user not found
+        return -1
+    user_id = result[0][0]
+
+    cursor.execute('select event_id from event where title = %s', (title,))
+    result = cursor.fetchall()
+    if len(result) == 0:  # event not found
+        return -1
+    event_id = result[0][0]
+
+    cursor.execute('insert into registration '
+                   '(user_id, event_id) '
+                   'values (%s, %s)', (user_id, event_id,))  # add new event
+    cnx.commit()  # commit changes to database
+    cursor.execute('select count(*) from registration where event_id = %s', (event_id,))        # Get registration count
+    result = cursor.fetchall()
+    print(result)
+    return result
+
+
+def sql_delete_registration(title, user, cursor, cnx):
+    """
+    Delete user registration for event based on title
+    :param title: title of the event to delete registration for
+    :param user: the user to delete registration for
+    :param cursor: cursor object for executing command
+    :param cnx: connection object for verifying change
+    :return: count of users registered for the event
+    """
+    cursor.execute('select user_id from user where display_name = %s', (user,))
+    result = cursor.fetchall()
+    if len(result) == 0:  # user not found
+        return -1
+    user_id = result[0][0]
+
+    cursor.execute('select event_id from event where title = %s', (title,))
+    result = cursor.fetchall()
+    if len(result) == 0:  # event not found
+        return -1
+    event_id = result[0][0]
+
+    cursor.execute('delete from registration where '
+                   'user_id = %s and event_id = %s', (user_id, event_id,))  # delete user registration
+    cnx.commit()  # commit changes to database
+    cursor.execute('select count(*) from registration where event_id = %s', (event_id,))  # get count of registered user
     return cursor.fetchall()
 
 
-def query_event(title, cursor):
+def sql_query_event(title, cursor):
     cursor.execute('select * from event where title = %s', (title,))
     return cursor.fetchall()
 
@@ -151,7 +221,3 @@ def check_admin_status(display_name, cursor):
         return -1
 
     return result[0][0]     # return 0 or 1
-
-
-if __name__ == '__main__':
-    main(0, [])
