@@ -141,7 +141,7 @@ def sql_delete_game(auth_user, name, cursor, cnx):
 
 
 def sql_edit_name(auth_user, old_name, new_name, cursor, cnx):
-    admin_status = check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
+    check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
 
     if len(sql_query_game(old_name, cursor)) == 0:
         raise GameNotFoundError

@@ -24,6 +24,7 @@ def check_admin_status(display_name, add, cursor):
     """
     Check to see if a given user is an admin.  Only admins can change the database.
     :param display_name: display name of requesting user
+    :param add: True if adding to database, False if deleting from database
     :param cursor: cursor object for executing search query
     :return: -1 if user does not exist, 0 if the user is not an admin, or 1 if the user is an admin
     """
