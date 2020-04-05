@@ -3,6 +3,9 @@ import time
 from datetime import date
 from discord.ext import commands
 from game_queries import get_game_id
+from helper_commands import check_admin_status, AdminPermissionError
+from game_queries import GameNotFoundError
+from mysql.connector.errors import IntegrityError
 
 
 class EventQueries(commands.Cog):
@@ -20,17 +23,27 @@ class EventQueries(commands.Cog):
         :param game_name: title of game to be played
         :return: new event table or error message
         """
-        game_id = get_game_id(game_name, self.cursor)
-        if game_id is None:
-            return 1
-        data_insert = {  # prepare data insert
-            'event_id': ctx.message.id,
-            'date': date.fromtimestamp(int(time.mktime(time.strptime(event_date, '%m/%d/%Y')))),  # create date
-            'game_id': game_id,  # get game's ID number
-            'title': event_title,  # event's title
-        }
+        try:
+            game_id = get_game_id(game_name, self.cursor)
+            check_date_format(event_date)
+            data_insert = {  # prepare data insert
+                'event_id': ctx.message.id % 2147483647,
+                'date': date.fromtimestamp(int(time.mktime(time.strptime(event_date, '%m/%d/%Y')))),  # create date
+                'game_id': game_id,  # get game's ID number
+                'title': event_title,  # event's title
+            }
 
-        await ctx.send(sql_create_event(data_insert, self.cursor, self.cnx))
+            message = sql_create_event(data_insert, self.cursor, self.cnx)
+        except DateFormatError:
+            await ctx.send("Error: your date is invalid.  Please use MM/DD/YYYY format")
+        except GameNotFoundError:
+            await ctx.send("Error: trying to create an event for a game that does not exist")
+        except ExistingEventError:
+            await ctx.send("Error: event with this title already exists")
+        except IntegrityError:
+            await ctx.send("Error: this event already exists")
+        else:
+            await ctx.send(message)
 
     @commands.command()
     async def delete_event(self, ctx, title):
@@ -39,7 +52,14 @@ class EventQueries(commands.Cog):
         :param title: title of event
         :return: new event table or error message
         """
-        await ctx.send(sql_delete_event(str(ctx.author), title, self.cursor, self.cnx))
+        try:
+            message = sql_delete_event(str(ctx.author), title, self.cursor, self.cnx)
+        except AdminPermissionError:
+            await ctx.send("Permission error: only admins may delete events")
+        except EventNotFoundError:
+            await ctx.send("Error: trying to remove an event that does not exist")
+        else:
+            await ctx.send(message)
 
     @commands.command()
     async def get_events(self, ctx):
@@ -77,6 +97,11 @@ class EventQueries(commands.Cog):
         await ctx.send(sql_query_event(event_name, self.cursor))
 
 
+def check_date_format(date_string):
+    if re.search(r'[0-9]+/[0-9]+/\d{4}\b', date_string) is None:
+        raise DateFormatError
+
+
 def parse_creation_message(message):
     """
     Parse the bot's creation message and extract event title, event date, and event game using regular expressions.
@@ -101,6 +126,9 @@ def sql_create_event(data_insert, cursor, cnx):
     :param cnx: MySQL connection for verifying changes
     :return: new event table after update
     """
+    if len(sql_query_event(data_insert['title'], cursor)) > 0:
+        raise ExistingEventError
+
     cursor.execute('insert into event '
                    '(event_id, date, game_id, title) '
                    'values (%(event_id)s, %(date)s, %(game_id)s, %(title)s)', data_insert)  # add new event
@@ -119,9 +147,10 @@ def sql_delete_event(auth_user, title, cursor, cnx):
     :param cnx: connection object for verifying change
     :return: new event table after deletion
     """
-    admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
-    if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
-        return 1
+    check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
+
+    if len(sql_query_event(title, cursor)) == 0:
+        raise EventNotFoundError
 
     cursor.execute('delete from event where title = %s', (title, ))  # execute deletion query
     cnx.commit()  # commit changes to database
@@ -207,17 +236,21 @@ def sql_query_event(title, cursor):
     return cursor.fetchall()
 
 
-def check_admin_status(display_name, cursor):
-    """
-    Check to see if a given user is an admin.  Only admins can change the database.
-    :param display_name: display name of requesting user
-    :param cursor: cursor object for executing search query
-    :return: 0 if the user is not an admin (or does not exist) or 1 if the user is an admin
-    """
-    cursor.execute('select admin from user where display_name = %s', (display_name,))
-    result = cursor.fetchall()
+# ERRORS #
 
-    if len(result) == 0:        # user not found
-        return -1
 
-    return result[0][0]     # return 0 or 1
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class ExistingEventError(Error):
+    pass
+
+
+class EventNotFoundError(Error):
+    pass
+
+
+class DateFormatError(Error):
+    pass

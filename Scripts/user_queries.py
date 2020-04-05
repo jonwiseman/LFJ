@@ -1,5 +1,7 @@
 from discord.ext import commands
 from game_queries import get_game_id
+from helper_commands import check_admin_status, AdminPermissionError
+
 
 class UserQueries(commands.Cog):
     def __init__(self, bot, cursor, cnx):
@@ -16,8 +18,15 @@ class UserQueries(commands.Cog):
         :param admin: admin status of new user
         :return: a message displaying the new user table or an error message
         """
-        await ctx.send(sql_add_user(str(ctx.author), display_name.split('#')[1], display_name, email, admin,
-                                    self.cursor, self.cnx))
+        try:
+            message = sql_add_user(str(ctx.author), display_name.split('#')[1], display_name, email, admin,
+                                   self.cursor, self.cnx)
+        except AdminPermissionError:
+            await ctx.send("Permission error encountered.  Only admins can add users to the backend.")
+        except ExistingUserError:
+            await ctx.send("Error: this user already exists.")
+        else:
+            await ctx.send(message)
 
     @commands.command()
     async def delete_user(self, ctx, display_name):
@@ -26,7 +35,15 @@ class UserQueries(commands.Cog):
         :param display_name: display name of user to be deleted
         :return:  a message displaying the new user table or an error message
         """
-        await ctx.send(sql_delete_user(str(ctx.author), display_name, self.cursor, self.cnx))
+        try:
+            message = sql_delete_user(str(ctx.author), display_name, self.cursor, self.cnx)
+        except AdminPermissionError:
+            await ctx.send("Permission Error encountered.  Either you are not an admin or are attempting to delete an "
+                           "admin.")
+        except UserNotFoundError:
+            await ctx.send("Error: attempting to delete a user that does not exist.")
+        else:
+            await ctx.send(message)
 
     @commands.command()
     async def set_email(self, ctx, display_name, email):
@@ -36,7 +53,14 @@ class UserQueries(commands.Cog):
         :param email: new email for user
         :return: a message displaying the new user table or an error message
         """
-        await ctx.send(sql_set_email(str(ctx.author), display_name, email, self.cursor, self.cnx))
+        try:
+            message = sql_set_email(str(ctx.author), display_name, email, self.cursor, self.cnx)
+        except AdminPermissionError:
+            await ctx.send("Permission Error encountered.  You do not have permission to edit the database")
+        except UserNotFoundError:
+            await ctx.send("Error: you are attempting to modify a user that does not exist.")
+        else:
+            await ctx.send(message)
 
     @commands.command()
     async def set_admin_status(self, ctx, display_name, status):
@@ -46,7 +70,16 @@ class UserQueries(commands.Cog):
         :param status: TRUE|FALSE
         :return: the updated user table or an error message
         """
-        await ctx.send(sql_set_admin_status(str(ctx.author), display_name, status, self.cursor, self.cnx))
+        try:
+            message = sql_set_admin_status(str(ctx.author), display_name, status, self.cursor, self.cnx)
+        except AdminPermissionError:
+            await ctx.send("Permission Error encountered.  You do not have permission to edit the database")
+        except UserNotFoundError:
+            await ctx.send("Error: you are attempting to modify a user that does not exist.")
+        except ResponseError:
+            await ctx.send("Error: please supply either TRUE or FALSE for new admin status")
+        else:
+            await ctx.send(message)
 
     @commands.command()
     async def query_user(self, ctx, user):
@@ -86,13 +119,11 @@ def sql_delete_user(auth_user, display_name, cursor, cnx):
     :param cnx: connection object for committing changes
     :return: the new table after deletion or an error flag
     """
-    admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
-    if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
-        return 1
+    check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
+    check_admin_status(display_name, False, cursor)  # see if the user to be deleted is an admin
 
-    delete_admin = check_admin_status(display_name, cursor)  # see if the user to be deleted is an admin
-    if delete_admin == -1 or delete_admin == 1:  # trying to delete a non-existant user or another admin
-        return 1
+    if len(sql_query_user(display_name, cursor)) == 0:
+        raise UserNotFoundError()
 
     cursor.execute('delete from user where display_name = %s', (display_name,))  # execute deletion query
     cnx.commit()  # commit changes to database
@@ -112,9 +143,10 @@ def sql_add_user(auth_user, user_id, display_name, email, is_admin, cursor, cnx)
     :param cnx: connection object for committing change
     :return: the new table after insertion or an error flag
     """
-    admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
-    if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
-        return 1
+    check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
+
+    if len(sql_query_user(display_name, cursor)) > 0:
+        raise ExistingUserError()
 
     cursor.execute('insert into user '
                    '(user_id, display_name, e_mail, admin) '
@@ -135,9 +167,10 @@ def sql_set_email(auth_user, display_name, email, cursor, cnx):
     :param cnx: connection object to commit changes
     :return: the new table after updating the user table
     """
-    admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
-    if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
-        return 1
+    check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
+
+    if len(sql_query_user(display_name, cursor)) == 0:
+        raise UserNotFoundError()
 
     cursor.execute('update user '
                    'set e_mail = %s '
@@ -157,12 +190,13 @@ def sql_set_admin_status(auth_user, display_name, new_status, cursor, cnx):
     :param cnx: connection object to commit changes
     :return: the new table after updating the user table
     """
-    admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
-    if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
-        return 1
+    check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
 
-    if not (new_status == 'true' or new_status == 'false'):  # syntax for setting admin status is not true or false
-        return 1
+    if len(sql_query_user(display_name, cursor)) == 0:
+        raise UserNotFoundError()
+
+    if not (new_status.lower() == 'true' or new_status.lower() == 'false'):  # check for valid response
+        raise ResponseError()
 
     cursor.execute('update user '
                    'set admin = %s '
@@ -172,20 +206,20 @@ def sql_set_admin_status(auth_user, display_name, new_status, cursor, cnx):
     return cursor.fetchall()
 
 
-# HELPER FUNCTIONS #
+# ERRORS #
+
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
 
 
-def check_admin_status(display_name, cursor):
-    """
-    Check to see if a given user is an admin.  Only admins can change the database.
-    :param display_name: display name of requesting user
-    :param cursor: cursor object for executing search query
-    :return: -1 if user does not exist, 0 if the user is not an admin, or 1 if the user is an admin
-    """
-    cursor.execute('select admin from user where display_name = %s', (display_name,))
-    result = cursor.fetchall()
+class UserNotFoundError(Error):
+    pass
 
-    if len(result) == 0:  # user not found
-        return -1
 
-    return result[0][0]  # return 0 or 1
+class ResponseError(Error):
+    pass
+
+
+class ExistingUserError(Error):
+    pass

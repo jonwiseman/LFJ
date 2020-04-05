@@ -1,4 +1,6 @@
 from discord.ext import commands
+from mysql.connector.errors import IntegrityError
+from helper_commands import check_admin_status, AdminPermissionError
 
 
 class GameQueries(commands.Cog):
@@ -15,7 +17,16 @@ class GameQueries(commands.Cog):
         :param name: title of game
         :return: new game table or error message
         """
-        await ctx.send(sql_add_game(str(ctx.author), game_id, name, self.cursor, self.cnx))
+        try:
+            message = sql_add_game(str(ctx.author), game_id, name, self.cursor, self.cnx)
+        except AdminPermissionError:
+            await ctx.send("Permission error encountered: only admins can add games")
+        except ExistingGameError:
+            await ctx.send("Error: this game already exists")
+        except IntegrityError:
+            await ctx.send("Error: a game already exists with this ID.  Please choose another.")
+        else:
+            await ctx.send(message)
 
     @commands.command()
     async def delete_game(self, ctx, name):
@@ -24,7 +35,12 @@ class GameQueries(commands.Cog):
         :param name: title of game
         :return: new game table or error message
         """
-        await ctx.send(sql_delete_game(str(ctx.author), name, self.cursor, self.cnx))
+        try:
+            message = sql_delete_game(str(ctx.author), name, self.cursor, self.cnx)
+        except GameNotFoundError:
+            await ctx.send("Error: attempting to delete a game that does not exist")
+        else:
+            await ctx.send(message)
 
     @commands.command()
     async def edit_name(self, ctx, old_name, new_name):
@@ -34,7 +50,14 @@ class GameQueries(commands.Cog):
         :param new_name: new game title
         :return: new game table or error message
         """
-        await ctx.send(sql_edit_name(str(ctx.author), old_name, new_name, self.cursor, self.cnx))
+        try:
+            message = sql_edit_name(str(ctx.author), old_name, new_name, self.cursor, self.cnx)
+        except GameNotFoundError:
+            await ctx.send("Error: trying to update a game that does not exist")
+        except ExistingGameError:
+            await ctx.send("Error: a game already exists with this name")
+        else:
+            await ctx.send(message)
 
     @commands.command()
     async def edit_id(self, ctx, name, game_id):
@@ -44,7 +67,14 @@ class GameQueries(commands.Cog):
         :param game_id: new game ID
         :return: new game table or error message
         """
-        await ctx.send(sql_edit_id(str(ctx.author), name, game_id, self.cursor, self.cnx))
+        try:
+            message = sql_edit_id(str(ctx.author), name, game_id, self.cursor, self.cnx)
+        except GameNotFoundError:
+            await ctx.send("Error: trying to update a game that does not exist")
+        except IntegrityError:
+            await ctx.send("Error: game with this ID already exists.  Please choose another")
+        else:
+            await ctx.send(message)
 
     @commands.command()
     async def query_game(self, ctx, name):
@@ -85,9 +115,9 @@ class GameQueries(commands.Cog):
 
 
 def sql_add_game(auth_user, game_id, name, cursor, cnx):
-    admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
-    if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
-        return 1
+    check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
+    if len(sql_query_game(name, cursor)) > 0:
+        raise ExistingGameError
 
     cursor.execute('insert into game '
                    '(game_id, name) '
@@ -98,19 +128,11 @@ def sql_add_game(auth_user, game_id, name, cursor, cnx):
     return cursor.fetchall()
 
 
-def sql_query_game(argument, cursor):
-    if argument.upper() == 'ALL':
-        cursor.execute('select * from game')
-        return cursor.fetchall()
-    else:
-        cursor.execute('select * from game where name = %s', (argument,))
-        return cursor.fetchall()
-
-
 def sql_delete_game(auth_user, name, cursor, cnx):
-    admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
-    if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
-        return 1
+    check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
+
+    if len(sql_query_game(name, cursor)) == 0:
+        raise GameNotFoundError
 
     cursor.execute('delete from game where name = %s', (name,))  # execute deletion query
     cnx.commit()  # commit changes to database
@@ -119,9 +141,12 @@ def sql_delete_game(auth_user, name, cursor, cnx):
 
 
 def sql_edit_name(auth_user, old_name, new_name, cursor, cnx):
-    admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
-    if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
-        return 1
+    check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
+
+    if len(sql_query_game(old_name, cursor)) == 0:
+        raise GameNotFoundError
+    if len(sql_query_game(new_name, cursor)) > 0:
+        raise ExistingGameError
 
     cursor.execute('update game '
                    'set name = %s '
@@ -132,9 +157,10 @@ def sql_edit_name(auth_user, old_name, new_name, cursor, cnx):
 
 
 def sql_edit_id(auth_user, name, game_id, cursor, cnx):
-    admin_status = check_admin_status(auth_user, cursor)  # see if the authorizing user is an admin
-    if admin_status == -1 or admin_status == 0:  # authorizing user does not exist or does not have permission
-        return 1
+    check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
+
+    if len(sql_query_game(name, cursor)) == 0:
+        raise GameNotFoundError
 
     cursor.execute('update game '
                    'set game_id = %s '
@@ -152,6 +178,15 @@ def sql_list_games(cursor):
     for record in result:
         msg += '%d\t%s\n' % record
     return msg
+
+
+def sql_query_game(argument, cursor):
+    if argument.upper() == 'ALL':
+        cursor.execute('select * from game')
+        return cursor.fetchall()
+    else:
+        cursor.execute('select * from game where name = %s', (argument,))
+        return cursor.fetchall()
 
 
 def sql_set_membership(auth_user, game_name, skill_level, cursor, cnx):
@@ -218,22 +253,6 @@ def sql_delete_membership(auth_user, game_name, cursor, cnx):
     return "Deleted " + auth_user + " from " + game_name
 
 
-def check_admin_status(display_name, cursor):
-    """
-    Check to see if a given user is an admin.  Only admins can change the database.
-    :param display_name: display name of requesting user
-    :param cursor: cursor object for executing search query
-    :return: -1 if user does not exist, 0 if the user is not an admin, or 1 if the user is an admin
-    """
-    cursor.execute('select admin from user where display_name = %s', (display_name,))
-    result = cursor.fetchall()
-
-    if len(result) == 0:    # user not found
-        return -1
-
-    return result[0][0]     # return 0 or 1
-
-
 def get_game_id(game_name, cursor):
     """
     Gets a game id from game name
@@ -241,11 +260,11 @@ def get_game_id(game_name, cursor):
     :param cursor: cursor object for executing search query
     :return: -1 if game does not exist, game_id if game is found
     """
-    cursor.execute('select game_id from game where name = %s', (game_name.lower(),))
+    cursor.execute('select game_id from game where name = %s', (game_name,))
     result = cursor.fetchall()
 
     if len(result) == 0:  # game not found
-        return -1
+        raise GameNotFoundError
 
     return result[0][0]  # return game id
 
@@ -281,3 +300,18 @@ def get_user_id(display_name, cursor):
         return -1
 
     return result[0][0]  # return user id
+
+# ERRORS #
+
+
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class ExistingGameError(Error):
+    pass
+
+
+class GameNotFoundError(Error):
+    pass
