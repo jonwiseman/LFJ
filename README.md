@@ -95,7 +95,7 @@ These are queries that allow interaction with the membership table:
 16. create_membership  
 17. delete_membership  
 
-**Miscelanious Commands**  
+**Miscellaneous Commands**  
 
 17. help  
 18. exit
