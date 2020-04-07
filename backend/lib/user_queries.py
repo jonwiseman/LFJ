@@ -1,6 +1,5 @@
 from discord.ext import commands
-from game_queries import get_game_id
-from helper_commands import check_admin_status, AdminPermissionError
+from backend.lib.helper_commands import check_admin_status, AdminPermissionError
 
 
 class UserQueries(commands.Cog):
@@ -153,7 +152,7 @@ def sql_add_user(auth_user, user_id, display_name, email, is_admin, cursor, cnx)
                    'values (%s, %s, %s, %s)', (user_id, display_name, email, is_admin))
     cnx.commit()  # commit changes to database
 
-    cursor.execute('select * from user')  # get new user table
+    cursor.execute('select * from user where display_name = %s', (display_name,))  # get new user table
     return cursor.fetchall()
 
 

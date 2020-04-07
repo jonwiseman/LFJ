@@ -1,6 +1,6 @@
 from discord.ext import commands
 from mysql.connector.errors import IntegrityError
-from helper_commands import check_admin_status, AdminPermissionError
+from backend.lib.helper_commands import check_admin_status, AdminPermissionError
 
 
 class GameQueries(commands.Cog):
