@@ -16,6 +16,7 @@ def main():
 
     token = config['Discord']['token']      # get the bot's unique token for sign-in
     event_channel_name = config['Discord']['events_channel']     # text name of the event channel
+    command_prefix = config['Discord']['prefix']
 
     username = config['Database']['username']       # get details for signing in to database
     password = config['Database']['password']
@@ -28,7 +29,7 @@ def main():
                                   database=database)        # connect to the database
     cursor = cnx.cursor()       # create cursor object for executing queries
 
-    client = commands.Bot(command_prefix='$', case_insensitive=True)       # create the bot client
+    client = commands.Bot(command_prefix=command_prefix, case_insensitive=True)       # create the bot client
 
     # BOT EVENTS #
 
