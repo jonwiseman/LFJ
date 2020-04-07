@@ -1,3 +1,5 @@
+[![CodeFactor](https://www.codefactor.io/repository/github/jonwiseman/lfj/badge)](https://www.codefactor.io/repository/github/jonwiseman/lfj)
+
 This repository contains files related to the final project for CS341: Software Engineering.
 
 ## Goal  
