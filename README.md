@@ -16,6 +16,14 @@ In order to use the LFJ bot, you will need two things:
 
 ## Start Guide
 
+**Cloning the Repository**  
+
+Run the following command:
+
+`git clone https://github.com/jonwiseman/LFJ FOLDER`
+
+FOLDER: name of folder to clone repository into  
+
 **Creating a Virtual Environment**  
 It's good practice to create a virtual environment for each one of your projects.  You can think of it like a separate Python installation for a project.  Creating a new virtual environment is simple: navigate to LFJ's root directory and run the following command:
 
