@@ -52,6 +52,7 @@ To maintain data security (such as database usernames and passwords, and the bot
 [Discord]  
 token =   
 events_channel =   
+prefix =
 
 [Database]  
 username =   
@@ -107,6 +108,8 @@ These are queries that allow interaction with the membership table:
 
 17. help  
 18. exit
+
+You can specify which prefix is used to address the bot by changing the configuration file.
 
 ---
 
