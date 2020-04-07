@@ -114,8 +114,8 @@ def parse_creation_message(message):
 
     if title is None or date is None or game is None:
         return 1, 1, 1
-    else:
-        return title, date, game
+
+    return title, date, game
 
 
 def sql_create_event(data_insert, cursor, cnx):
@@ -241,16 +241,15 @@ def sql_query_event(title, cursor):
 
 class Error(Exception):
     """Base class for exceptions in this module."""
-    pass
 
 
 class ExistingEventError(Error):
-    pass
+    """Trying to create an event that already exists."""
 
 
 class EventNotFoundError(Error):
-    pass
+    """Trying to register for or change an event that does not exist."""
 
 
 class DateFormatError(Error):
-    pass
+    """User supplied incorrectly formatted date"""

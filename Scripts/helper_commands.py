@@ -41,9 +41,9 @@ def check_admin_status(display_name, add, cursor):
 
 class Error(Exception):
     """Base class for exceptions in this module."""
-    pass
 
 
 class AdminPermissionError(Error):
+    """Invalid permission to modify database."""
     def __init__(self, display_name):
         self.display_name = display_name
