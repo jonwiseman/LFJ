@@ -8,8 +8,8 @@ from helper_commands import HelperCommands
 
 
 def main():
-    event_channel = None
-    event_created = True
+    # event_channel = None
+    # event_created = True
 
     config = configparser.ConfigParser()        # read and parse configuration file
     config.read(r'../configuration.conf')
@@ -42,15 +42,15 @@ def main():
         global event_channel
         global event_created
         print('We have logged in as {0.user}'.format(client))
-        for channel in client.get_all_channels():
-            if str(channel.name) == event_channel_name:
-                event_channel = channel
-
-        if event_channel is None:  # server does not have a dedicated events channel
-            print("ERROR: Could not find event channel")
-            await client.logout()
-
-        event_created = True
+        # for channel in client.get_all_channels():
+        #     if str(channel.name) == event_channel_name:
+        #         event_channel = channel
+        #
+        # if event_channel is None:  # server does not have a dedicated events channel
+        #     print("ERROR: Could not find event channel")
+        #     await client.logout()
+        #
+        # event_created = True
 
     # RUN THE BOT #
     client.add_cog(HelperCommands(client, cursor, cnx))

@@ -104,10 +104,10 @@ def sql_query_user(argument, cursor):
     """
     if argument.upper() == 'ALL':
         cursor.execute('select * from user')
-        return cursor.fetchall()
     else:
         cursor.execute('select * from user where display_name = %s', (argument,))
-        return cursor.fetchall()
+
+    return cursor.fetchall()
 
 
 def sql_delete_user(auth_user, display_name, cursor, cnx):
@@ -210,16 +210,15 @@ def sql_set_admin_status(auth_user, display_name, new_status, cursor, cnx):
 
 class Error(Exception):
     """Base class for exceptions in this module."""
-    pass
 
 
 class UserNotFoundError(Error):
-    pass
+    """User not found in database."""
 
 
 class ResponseError(Error):
-    pass
+    """Invalid response or argument supplied."""
 
 
 class ExistingUserError(Error):
-    pass
+    """Trying to create a user that already exists"""

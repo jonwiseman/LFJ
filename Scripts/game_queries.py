@@ -183,10 +183,10 @@ def sql_list_games(cursor):
 def sql_query_game(argument, cursor):
     if argument.upper() == 'ALL':
         cursor.execute('select * from game')
-        return cursor.fetchall()
     else:
         cursor.execute('select * from game where name = %s', (argument,))
-        return cursor.fetchall()
+
+    return cursor.fetchall()
 
 
 def sql_set_membership(auth_user, game_name, skill_level, cursor, cnx):
@@ -306,12 +306,11 @@ def get_user_id(display_name, cursor):
 
 class Error(Exception):
     """Base class for exceptions in this module."""
-    pass
 
 
 class ExistingGameError(Error):
-    pass
+    """Trying to create a game that already exists."""
 
 
 class GameNotFoundError(Error):
-    pass
+    """Trying to modify a game that does not exist."""
