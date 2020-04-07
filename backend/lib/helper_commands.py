@@ -31,7 +31,7 @@ def check_admin_status(display_name, add, cursor):
     cursor.execute('select admin from user where display_name = %s', (display_name,))
     result = cursor.fetchall()
 
-    if add and (len(result) == 0 or result[0][0] == -1):        # adding to the database
+    if add and (len(result) == 0 or result[0][0] == 0):        # adding to the database
         raise AdminPermissionError(display_name)
     elif not add and (len(result) > 0 and result[0][0] == 1):       # removing from the database
         raise AdminPermissionError(display_name)
