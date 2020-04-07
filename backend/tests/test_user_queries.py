@@ -8,7 +8,7 @@ from backend.lib.helper_commands import AdminPermissionError
 class UserTestCase(unittest.TestCase):
     def setUp(self):
         config = configparser.ConfigParser()  # read and parse configuration file
-        config.read(r'configuration.conf')
+        config.read(r'test_configuration.conf')
 
         username = config['Database']['username']  # get details for signing in to database
         password = config['Database']['password']
