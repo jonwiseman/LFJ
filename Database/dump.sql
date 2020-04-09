@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 07, 2020 at 09:31 PM
+-- Generation Time: Apr 09, 2020 at 06:04 PM
 -- Server version: 10.4.8-MariaDB
 -- PHP Version: 7.1.33
 
@@ -51,9 +51,9 @@ CREATE TABLE `game` (
 --
 
 INSERT INTO `game` (`game_id`, `name`) VALUES
+(0, 'League of Legends'),
 (1, 'CSGO'),
-(2, 'Rocket League'),
-(15, 'League of Legends');
+(2, 'Rocket League');
 
 -- --------------------------------------------------------
 

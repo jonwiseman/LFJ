@@ -8,17 +8,31 @@ from backend.lib.helper_commands import AdminPermissionError
 class UserTestCase(unittest.TestCase):
     def setUp(self):
         config = configparser.ConfigParser()  # read and parse configuration file
-        config.read(r'test_configuration.conf')
+        config.read(r'backend/tests/test_configuration.conf')
 
         username = config['Database']['username']  # get details for signing in to database
         password = config['Database']['password']
         host = config['Database']['host']
         database = config['Database']['database']
 
-        self.cnx = mysql.connector.connect(user=username,
+        try:        # for CI testing
+            self.cnx = mysql.connector.connect(user=username,
                                            password=password,
                                            host=host,
                                            database=database)  # connect to the database
+        except mysql.connector.errors.DatabaseError:        # for local testing
+            config.read(r'configuration.conf')
+
+            username = config['Database']['username']  # get details for signing in to database
+            password = config['Database']['password']
+            host = config['Database']['host']
+            database = config['Database']['database']
+
+            self.cnx = mysql.connector.connect(user=username,
+                                               password=password,
+                                               host=host,
+                                               database=database)  # connect to the database
+
         self.cursor = self.cnx.cursor()  # create cursor object for executing queries
 
         self.display_name = config['Testing']['display_name']

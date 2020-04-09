@@ -37,6 +37,8 @@ class GameQueries(commands.Cog):
         """
         try:
             message = sql_delete_game(str(ctx.author), name, self.cursor, self.cnx)
+        except AdminPermissionError:
+            await ctx.send("Permission error: must be an admin to delete a game")
         except GameNotFoundError:
             await ctx.send("Error: attempting to delete a game that does not exist")
         else:
@@ -52,6 +54,8 @@ class GameQueries(commands.Cog):
         """
         try:
             message = sql_edit_name(str(ctx.author), old_name, new_name, self.cursor, self.cnx)
+        except AdminPermissionError:
+            await ctx.send("Permission error: must be an admin to edit the database")
         except GameNotFoundError:
             await ctx.send("Error: trying to update a game that does not exist")
         except ExistingGameError:
@@ -69,6 +73,8 @@ class GameQueries(commands.Cog):
         """
         try:
             message = sql_edit_id(str(ctx.author), name, game_id, self.cursor, self.cnx)
+        except AdminPermissionError:
+            await ctx.send("Permission error: must be an admin to edit the database")
         except GameNotFoundError:
             await ctx.send("Error: trying to update a game that does not exist")
         except IntegrityError:
@@ -124,7 +130,7 @@ def sql_add_game(auth_user, game_id, name, cursor, cnx):
                    'values (%s, %s)', (game_id, name))  # add new user
     cnx.commit()  # commit changes to database
 
-    cursor.execute('select * from game')  # get new user table
+    cursor.execute('select * from game where name = %s', (name,))  # get new user table
     return cursor.fetchall()
 
 
@@ -152,7 +158,7 @@ def sql_edit_name(auth_user, old_name, new_name, cursor, cnx):
                    'set name = %s '
                    'where name = %s', (new_name, old_name))  # change the game table with new email
     cnx.commit()  # commit changes to user table
-    cursor.execute('select * from game')  # get new user table
+    cursor.execute('select * from game where name = %s', (new_name,))  # get new user table
     return cursor.fetchall()
 
 
@@ -166,7 +172,7 @@ def sql_edit_id(auth_user, name, game_id, cursor, cnx):
                    'set game_id = %s '
                    'where name = %s', (game_id, name))  # change the game table with new email
     cnx.commit()  # commit changes to user table
-    cursor.execute('select * from game')  # get new user table
+    cursor.execute('select * from game where name = %s', (name,))  # get new user table
     return cursor.fetchall()
 
 
