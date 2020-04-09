@@ -134,7 +134,8 @@ def sql_create_event(data_insert, cursor, cnx):
                    'values (%(event_id)s, %(date)s, %(game_id)s, %(title)s)', data_insert)  # add new event
     cnx.commit()  # commit changes to database
 
-    cursor.execute('select * from event')  # get new event table
+    cursor.execute('select * from event where title = %s', (data_insert['title'],))  # get new event table
+
     return cursor.fetchall()
 
 
