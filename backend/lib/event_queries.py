@@ -3,7 +3,7 @@ import time
 from datetime import date
 from discord.ext import commands
 from backend.lib.game_queries import get_game_id
-from backend.lib.helper_commands import check_admin_status, AdminPermissionError
+from backend.lib.helper_commands import check_admin_status, get_name_from_id, get_id_from_title, AdminPermissionError
 from backend.lib.game_queries import GameNotFoundError
 from mysql.connector.errors import IntegrityError
 
@@ -188,11 +188,9 @@ def sql_create_registration(title, user, cursor, cnx):
         return -1
     user_id = result[0][0]
 
-    cursor.execute('select event_id from event where title = %s', (title,))
-    result = cursor.fetchall()
-    if len(result) == 0:  # event not found
-        return -1
-    event_id = result[0][0]
+    event_id = get_id_from_title(title, cursor)
+    if event_id == -1:
+        return -1   # If no event found, return error
 
     cursor.execute('insert into registration '
                    '(user_id, event_id) '
@@ -219,11 +217,9 @@ def sql_delete_registration(title, user, cursor, cnx):
         return -1
     user_id = result[0][0]
 
-    cursor.execute('select event_id from event where title = %s', (title,))
-    result = cursor.fetchall()
-    if len(result) == 0:  # event not found
-        return -1
-    event_id = result[0][0]
+    event_id = get_id_from_title(title, cursor)
+    if event_id == -1:
+        return -1  # If no event found, return error
 
     cursor.execute('delete from registration where '
                    'user_id = %s and event_id = %s', (user_id, event_id,))  # delete user registration
@@ -231,6 +227,15 @@ def sql_delete_registration(title, user, cursor, cnx):
     cursor.execute('select count(*) from registration where event_id = %s', (event_id,))  # get count of registered user
     return cursor.fetchall()
 
+def update_event_registration(event_id, cursor, cnx):
+    cursor.execute('select user_id from registration where event_id = %s', (event_id,)) # Get user_ids of current event registration
+    result = cursor.fetchall()
+
+    display_names = []
+    for user_id in result:
+        display_names.append(get_name_from_id(user_id, cursor)) # Places all display_names in list
+
+    #   TODO Loop through display names and fill in registration event message
 
 def sql_query_event(title, cursor):
     cursor.execute('select * from event where title = %s', (title,))

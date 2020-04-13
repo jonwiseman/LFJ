@@ -36,6 +36,53 @@ def check_admin_status(display_name, add, cursor):
     elif not add and (len(result) > 0 and result[0][0] == 1):       # removing from the database
         raise AdminPermissionError(display_name)
 
+
+def get_id_from_name(display_name, cursor):
+    """
+    Gets a user id from display name of a user
+    :param display_name: display name of user whose id will be gotten
+    :param cursor: cursor object for executing search query
+    :return: -1 if user does not exist, user_id if user is found
+    """
+    cursor.execute('select user_id from user where display_name = %s', (display_name,))
+    result = cursor.fetchall()
+
+    if len(result) == 0:  # user not found
+        return -1
+
+    return result[0][0]  # return user id
+
+
+def get_name_from_id(user_id, cursor):
+    """
+    Gets a user id from display name of a user
+    :param user_id: id of user whose display name will be gotten
+    :param cursor: cursor object for executing search query
+    :return: -1 if user does not exist, display_name if user is found
+    """
+    cursor.execute('select display_name from user where user_id = %s', (user_id,))
+    result = cursor.fetchall()
+
+    if len(result) == 0:  # user not found
+        return -1
+
+    return result[0][0]  # return display name
+
+
+def get_id_from_title(title, cursor):
+    """
+    Gets an event id from title of event
+    :param title: title of event name to get id for
+    :param cursor: cursor object for executing search query
+    :return: -1 if event does not exist, event_id if event is found
+    """
+
+    cursor.execute('select event_id from event where title = %s', (title,))
+    result = cursor.fetchall()
+    if len(result) == 0:  # event not found
+        return -1
+    return result[0][0] # return event id
+
 # ERRORS #
 
 
