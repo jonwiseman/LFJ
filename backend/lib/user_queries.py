@@ -1,6 +1,5 @@
 from discord.ext import commands
-from game_queries import get_game_id
-from helper_commands import check_admin_status, AdminPermissionError
+from backend.lib.helper_commands import check_admin_status, AdminPermissionError
 
 
 class UserQueries(commands.Cog):
@@ -153,7 +152,7 @@ def sql_add_user(auth_user, user_id, display_name, email, is_admin, cursor, cnx)
                    'values (%s, %s, %s, %s)', (user_id, display_name, email, is_admin))
     cnx.commit()  # commit changes to database
 
-    cursor.execute('select * from user')  # get new user table
+    cursor.execute('select * from user where display_name = %s', (display_name,))  # get new user table
     return cursor.fetchall()
 
 
@@ -176,7 +175,7 @@ def sql_set_email(auth_user, display_name, email, cursor, cnx):
                    'set e_mail = %s '
                    'where display_name = %s', (email, display_name))  # change the user table with new email
     cnx.commit()  # commit changes to user table
-    cursor.execute('select * from user')  # get new user table
+    cursor.execute('select * from user where display_name = %s', (display_name,))  # get new user table
     return cursor.fetchall()
 
 
@@ -202,7 +201,7 @@ def sql_set_admin_status(auth_user, display_name, new_status, cursor, cnx):
                    'set admin = %s '
                    'where display_name = %s', (1 if new_status == "true" else 0, display_name))
     cnx.commit()  # commit changes to user table
-    cursor.execute('select * from user')  # get new user table
+    cursor.execute('select * from user where display_name = %s', (display_name,))  # get new user table
     return cursor.fetchall()
 
 

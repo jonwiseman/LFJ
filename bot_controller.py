@@ -1,10 +1,10 @@
 import configparser
 from discord.ext import commands
 import mysql.connector
-from user_queries import UserQueries
-from game_queries import GameQueries
-from event_queries import EventQueries
-from helper_commands import HelperCommands
+from backend.lib.user_queries import UserQueries
+from backend.lib.game_queries import GameQueries
+from backend.lib.event_queries import EventQueries
+from backend.lib.helper_commands import HelperCommands
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
     # event_created = True
 
     config = configparser.ConfigParser()        # read and parse configuration file
-    config.read(r'../configuration.conf')
+    config.read(r'configuration.conf')
 
     token = config['Discord']['token']      # get the bot's unique token for sign-in
     event_channel_name = config['Discord']['events_channel']     # text name of the event channel
