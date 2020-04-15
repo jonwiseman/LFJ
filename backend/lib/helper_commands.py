@@ -83,6 +83,39 @@ def get_id_from_title(title, cursor):
         return -1
     return result[0][0] # return event id
 
+
+def get_game_id(game_name, cursor):
+    """
+    Gets a game id from game name
+    :param game_name: name of a game to get id for
+    :param cursor: cursor object for executing search query
+    :return: -1 if game does not exist, game_id if game is found
+    """
+    cursor.execute('select game_id from game where name = %s', (game_name,))
+    result = cursor.fetchall()
+
+    if len(result) == 0:  # game not found
+        raise GameNotFoundError
+
+    return result[0][0]  # return game id
+
+
+def get_game_name(game_id, cursor):
+    """
+    Gets a game id from game name
+    :param game_id: id of a game to get name for
+    :param cursor: cursor object for executing search query
+    :return: -1 if game does not exist, game_id if game is found
+    """
+    cursor.execute('select name from game where game_id = %s', (game_id,))
+    result = cursor.fetchall()
+
+    if len(result) == 0:  # game not found
+        raise GameNotFoundError
+
+    return result[0][0]  # return game id
+
+
 # ERRORS #
 
 
@@ -94,3 +127,7 @@ class AdminPermissionError(Error):
     """Invalid permission to modify database."""
     def __init__(self, display_name):
         self.display_name = display_name
+
+
+class GameNotFoundError(Error):
+    """Trying to modify a game that does not exist."""

@@ -1,10 +1,12 @@
 import re
 import time
 from datetime import date
+
+import discord
 from discord.ext import commands
 from backend.lib.game_queries import get_game_id
-from backend.lib.helper_commands import check_admin_status, get_name_from_id, get_id_from_title, AdminPermissionError
-from backend.lib.game_queries import GameNotFoundError
+from backend.lib.helper_commands import check_admin_status, get_name_from_id, get_id_from_title, get_game_name, \
+    AdminPermissionError, GameNotFoundError
 from mysql.connector.errors import IntegrityError
 
 
@@ -15,25 +17,27 @@ class EventQueries(commands.Cog):
         self.cnx = cnx
 
     @commands.command()
-    async def create_event(self, ctx, event_title, event_date, game_name):
+    async def create_event(self, ctx, event_title, event_date, game_name, team_size):
         """
         Create new event
         :param event_title: title of event
         :param event_date: date of event (formatted DD/MM/YYYY)
-        :param game_name: title of game to be played
+        :param game_name: title of game to be played\
+        :param team_size: size of individual teams
         :return: new event table or error message
         """
         try:
             game_id = get_game_id(game_name, self.cursor)
             check_date_format(event_date)
             data_insert = {  # prepare data insert
-                'event_id': ctx.message.id % 2147483647,
+                'event_id': -1,
                 'date': date.fromtimestamp(int(time.mktime(time.strptime(event_date, '%m/%d/%Y')))),  # create date
                 'game_id': game_id,  # get game's ID number
                 'title': event_title,  # event's title
+                'team_size': team_size, # individual team size
             }
 
-            message = sql_create_event(data_insert, self.cursor, self.cnx)
+            message = sql_create_event(data_insert, self.bot, self.cursor, self.cnx)
         except DateFormatError:
             await ctx.send("Error: your date is invalid.  Please use MM/DD/YYYY format")
         except GameNotFoundError:
@@ -42,8 +46,10 @@ class EventQueries(commands.Cog):
             await ctx.send("Error: event with this title already exists")
         except IntegrityError:
             await ctx.send("Error: this event already exists")
+        except TeamSizeError:
+            await ctx.send("Error: team size must be above 0")
         else:
-            await ctx.send(message)
+            await ctx.send(embed=message)
 
     @commands.command()
     async def delete_event(self, ctx, title):
@@ -111,17 +117,19 @@ def parse_creation_message(message):
     title = re.search('Title: [\w]+([_]*[\w]*)*', message).group(0).split(' ')[1]
     date = re.search('Date: [0-9]+/[0-9]+/[0-9][0-9][0-9][0-9]', message).group(0).split(' ')[1]
     game = re.search('Game: [\w]+', message).group(0).split(' ')[1]
+    team_size = re.search('Team Size: [\w]+', message).group(0).split(' ')[1]
 
     if title is None or date is None or game is None:
-        return 1, 1, 1
+        return 1, 1, 1, 1
 
-    return title, date, game
+    return title, date, game, team_size
 
 
-def sql_create_event(data_insert, cursor, cnx):
+def sql_create_event(data_insert, bot, cursor, cnx):
     """
     Create a new event row in the event table.
     :param data_insert: prepared data insert (event's id, event's date, game's name, event's title)
+    :param bot: main client used for locating event channel to send messages
     :param cursor: MySQL cursor object for executing command and fetching result
     :param cnx: MySQL connection for verifying changes
     :return: new event table after update
@@ -129,14 +137,35 @@ def sql_create_event(data_insert, cursor, cnx):
     if len(sql_query_event(data_insert['title'], cursor)) > 0:
         raise ExistingEventError
 
+    if int(data_insert['team_size']) <= 0:
+        raise TeamSizeError
+
+    text_channel = bot.get_channel(699436419751608321)
+
+    team_text = "-----\n"
+
+    for i in range(int(data_insert['team_size'])):
+        team_text += "-----\n"
+
+    embed = discord.Embed(title="--------------------------------------------------\n" +
+                                "Title: " + data_insert['title'] + "\n" +
+                                "Date: " + data_insert['date'].strftime('%m/%d/%y') + "\n" +
+                                "Game: " + get_game_name(data_insert['game_id'], cursor) + "\n" +
+                                "--------------------------------------------------"
+                          , description="Desc", color=0x00ff00)
+    embed.add_field(name="Team 1", value=team_text, inline=True)
+    embed.add_field(name="Team 2", value=team_text, inline=True)
+    #await text_channel.send(embed=embed)
+    #data_insert['event_id'] = text_channel.last_message_id
+
     cursor.execute('insert into event '
-                   '(event_id, date, game_id, title) '
-                   'values (%(event_id)s, %(date)s, %(game_id)s, %(title)s)', data_insert)  # add new event
+                   '(event_id, date, game_id, title, team_size) '
+                   'values (%(event_id)s, %(date)s, %(game_id)s, %(title)s, %(team_size)s)', data_insert)    # add new event
     cnx.commit()  # commit changes to database
 
     cursor.execute('select * from event where title = %s', (data_insert['title'],))  # get new event table
 
-    return cursor.fetchall()
+    return embed
 
 
 def sql_delete_event(auth_user, title, cursor, cnx):
@@ -227,8 +256,9 @@ def sql_delete_registration(title, user, cursor, cnx):
     cursor.execute('select count(*) from registration where event_id = %s', (event_id,))  # get count of registered user
     return cursor.fetchall()
 
+
 def update_event_registration(event_id, cursor, cnx):
-    cursor.execute('select user_id from registration where event_id = %s', (event_id,)) # Get user_ids of current event registration
+    cursor.execute('select user_id from registration where event_id = %s', (event_id,)) # Get user_ids
     result = cursor.fetchall()
 
     display_names = []
@@ -236,6 +266,7 @@ def update_event_registration(event_id, cursor, cnx):
         display_names.append(get_name_from_id(user_id, cursor)) # Places all display_names in list
 
     #   TODO Loop through display names and fill in registration event message
+
 
 def sql_query_event(title, cursor):
     cursor.execute('select * from event where title = %s', (title,))
@@ -259,3 +290,7 @@ class EventNotFoundError(Error):
 
 class DateFormatError(Error):
     """User supplied incorrectly formatted date"""
+
+
+class TeamSizeError(Error):
+    """User supplied incorrect team size (team_size <= 0)"""
