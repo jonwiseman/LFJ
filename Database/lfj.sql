@@ -49,10 +49,11 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `LFJ`.`event` ;
 
 CREATE TABLE IF NOT EXISTS `LFJ`.`event` (
-  `event_id` INT NOT NULL,
+  `event_id` BIGINT(20) NOT NULL,
   `date` DATE NOT NULL,
   `game_id` INT NOT NULL,
   `title` VARCHAR(45) NOT NULL,
+  `team_size` INT NOT NULL,
   PRIMARY KEY (`event_id`))
 ENGINE = InnoDB;
 

@@ -11,10 +11,11 @@ from mysql.connector.errors import IntegrityError
 
 
 class EventQueries(commands.Cog):
-    def __init__(self, bot, cursor, cnx):
+    def __init__(self, bot, cursor, cnx, event_channel_id):
         self.bot = bot
         self.cursor = cursor
         self.cnx = cnx
+        self.event_channel_id = event_channel_id
 
     @commands.command()
     async def create_event(self, ctx, event_title, event_date, game_name, team_size):
@@ -37,7 +38,7 @@ class EventQueries(commands.Cog):
                 'team_size': team_size, # individual team size
             }
 
-            message = sql_create_event(data_insert, self.bot, self.cursor, self.cnx)
+            message = sql_create_event(data_insert, self.cursor, self.cnx)
         except DateFormatError:
             await ctx.send("Error: your date is invalid.  Please use MM/DD/YYYY format")
         except GameNotFoundError:
@@ -49,7 +50,9 @@ class EventQueries(commands.Cog):
         except TeamSizeError:
             await ctx.send("Error: team size must be above 0")
         else:
-            await ctx.send(embed=message)
+            text_channel = self.bot.get_channel(self.event_channel_id)
+            msg = await text_channel.send(embed=message)
+            sql_update_event_id(msg.id, event_title, self.cursor, self.cnx)
 
     @commands.command()
     async def delete_event(self, ctx, title):
@@ -108,28 +111,10 @@ def check_date_format(date_string):
         raise DateFormatError
 
 
-def parse_creation_message(message):
-    """
-    Parse the bot's creation message and extract event title, event date, and event game using regular expressions.
-    :param message: bot's creation message
-    :return: title, date and game (or three error flags)
-    """
-    title = re.search('Title: [\w]+([_]*[\w]*)*', message).group(0).split(' ')[1]
-    date = re.search('Date: [0-9]+/[0-9]+/[0-9][0-9][0-9][0-9]', message).group(0).split(' ')[1]
-    game = re.search('Game: [\w]+', message).group(0).split(' ')[1]
-    team_size = re.search('Team Size: [\w]+', message).group(0).split(' ')[1]
-
-    if title is None or date is None or game is None:
-        return 1, 1, 1, 1
-
-    return title, date, game, team_size
-
-
-def sql_create_event(data_insert, bot, cursor, cnx):
+def sql_create_event(data_insert, cursor, cnx):
     """
     Create a new event row in the event table.
     :param data_insert: prepared data insert (event's id, event's date, game's name, event's title)
-    :param bot: main client used for locating event channel to send messages
     :param cursor: MySQL cursor object for executing command and fetching result
     :param cnx: MySQL connection for verifying changes
     :return: new event table after update
@@ -140,32 +125,24 @@ def sql_create_event(data_insert, bot, cursor, cnx):
     if int(data_insert['team_size']) <= 0:
         raise TeamSizeError
 
-    text_channel = bot.get_channel(699436419751608321)
+    team_size = int(data_insert['team_size'])
+    teams = create_blank_teams(team_size)
 
-    team_text = "-----\n"
-
-    for i in range(int(data_insert['team_size'])):
-        team_text += "-----\n"
-
-    embed = discord.Embed(title="--------------------------------------------------\n" +
-                                "Title: " + data_insert['title'] + "\n" +
-                                "Date: " + data_insert['date'].strftime('%m/%d/%y') + "\n" +
-                                "Game: " + get_game_name(data_insert['game_id'], cursor) + "\n" +
-                                "--------------------------------------------------"
-                          , description="Desc", color=0x00ff00)
-    embed.add_field(name="Team 1", value=team_text, inline=True)
-    embed.add_field(name="Team 2", value=team_text, inline=True)
-    #await text_channel.send(embed=embed)
-    #data_insert['event_id'] = text_channel.last_message_id
+    embed = create_embed_message(data_insert['title'], data_insert['date'], data_insert['game_id'], teams, cursor)
 
     cursor.execute('insert into event '
                    '(event_id, date, game_id, title, team_size) '
                    'values (%(event_id)s, %(date)s, %(game_id)s, %(title)s, %(team_size)s)', data_insert)    # add new event
     cnx.commit()  # commit changes to database
 
-    cursor.execute('select * from event where title = %s', (data_insert['title'],))  # get new event table
+    return embed    # return embed message to send via events channel
 
-    return embed
+
+def sql_update_event_id(event_id, title, cursor, cnx):
+    cursor.execute('update event '
+                   'set event_id = %s '
+                   'where title = %s', (event_id, title))
+    cnx.commit()  # commit changes to user table
 
 
 def sql_delete_event(auth_user, title, cursor, cnx):
@@ -265,12 +242,58 @@ def update_event_registration(event_id, cursor, cnx):
     for user_id in result:
         display_names.append(get_name_from_id(user_id, cursor)) # Places all display_names in list
 
-    #   TODO Loop through display names and fill in registration event message
+    #embed = discord.Embed.from_data(embedFromMessage)
 
 
 def sql_query_event(title, cursor):
     cursor.execute('select * from event where title = %s', (title,))
     return cursor.fetchall()
+
+
+# TEAMS AND EMBEDED MESSAGES #
+
+
+def create_embed_message(title, game_date, game_id, teams, cursor):
+    embed = discord.Embed(title="--------------------------------------------------\n" +
+                                "Title: " + title + "\n" +
+                                "Date: " + game_date.strftime('%m/%d/%y') + "\n" +
+                                "Game: " + get_game_name(game_id, cursor) + "\n" +
+                                "--------------------------------------------------"
+                          , description="Desc", color=0x00ff00)
+    embed.add_field(name="Team 1", value=convert_team_to_text(teams[0]), inline=True)
+    embed.add_field(name="Team 2", value=convert_team_to_text(teams[1]), inline=True)
+
+    return embed
+
+
+def create_blank_teams(team_size):
+    teams = [['-----'] * team_size] * 2
+
+    return teams
+
+
+def convert_team_to_text(team):
+    team_text = ''
+    for player in team:
+        team_text += player + "\n"
+
+    return team_text
+
+
+def get_teams_from_embed(embed, team_size):
+    """
+    :param embed: embeded message to decode teams from
+    :param team_size: team size for event
+    :return: two lists for Team 1 and Team 2 containing display_names for registered players
+    """
+    teams = create_blank_teams(team_size)  # Blank team arrays for Team 1 and Team 2
+    for field in embed.fields:  # Only sets values for certain Embed values sent from bot
+        if field.name == 'Team 1':
+            teams[0] = str(field.value).split('\n')
+        elif field.name == 'Team 2':
+            teams[1] = str(field.value).split('\n')
+
+    return teams    # Return team arrays
 
 
 # ERRORS #
