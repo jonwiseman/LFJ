@@ -5,9 +5,11 @@ from datetime import date
 import discord
 from discord.ext import commands
 from backend.lib.game_queries import get_game_id
-from backend.lib.helper_commands import check_admin_status, get_id_from_name, get_name_from_id, \
+from backend.lib.helper_commands import check_admin_status, get_id_from_name, \
     get_id_from_title, get_game_name, AdminPermissionError, GameNotFoundError
 from mysql.connector.errors import IntegrityError
+
+from backend.lib.user_queries import UserNotFoundError
 
 
 class EventQueries(commands.Cog):
@@ -21,7 +23,7 @@ class EventQueries(commands.Cog):
     async def create_event(self, ctx, event_title, event_date, game_name, team_size):
         """
         Create new event
-        #param ctx:
+        :param ctx:
         :param event_title: title of event
         :param event_date: date of event (formatted DD/MM/YYYY)
         :param game_name: title of game to be played\
@@ -55,22 +57,28 @@ class EventQueries(commands.Cog):
             msg = await event_channel.send(embed=message)
             sql_update_event_id(msg.id, event_title, self.cursor, self.cnx)
 
+            await ctx.send("Successfully created event " + event_title + "!")
+
     @commands.command()
-    async def delete_event(self, ctx, title):
+    async def delete_event(self, ctx, event_title):
         """
         Delete an event
         :param ctx:
-        :param title: title of event
+        :param event_title: title of event
         :return: new event table or error message
         """
+
+        event_id = get_id_from_title(event_title, self.cursor)
+        if event_id == -1:  # Separate error checking for event (because we will need the id here)
+            await ctx.send("Error: the event you are attempting to delete does not exist")
+            return  # If no event found, return with error
         try:
-            message = sql_delete_event(str(ctx.author), title, self.cursor, self.cnx)
+            sql_delete_event(str(ctx.author), event_id, self.cursor, self.cnx)
         except AdminPermissionError:
             await ctx.send("Permission error: only admins may delete events")
-        except EventNotFoundError:
-            await ctx.send("Error: trying to remove an event that does not exist")
         else:
-            await ctx.send(message)
+            sql_delete_all_registrations(event_id, self.cursor, self.cnx)   # Remove all registrations for event
+            await ctx.send("Successfully deleted event " + event_title + "!")
 
     @commands.command()
     async def get_events(self, ctx):
@@ -90,43 +98,75 @@ class EventQueries(commands.Cog):
         :return: new count of event registrations
         """
         event_id = get_id_from_title(event_title, self.cursor)
-        if event_id == -1:
-            await ctx.send("Error: no event with name \'" + event_title + "\' found")
+        if event_id == -1:  # Separate error checking for event (because we will need the id here)
+            await ctx.send("Error: the event you are attempting to register for does not exist")
             return  # If no event found, return with error
+        try:
+            sql_create_registration(str(event_id), str(ctx.author), self.cursor, self.cnx)
+        except UserNotFoundError:
+            await ctx.send("Error: player not found in database")
+        else:
+            event_channel = self.bot.get_channel(self.event_channel_id)  # Get event channel
+            msg = await event_channel.fetch_message(event_id)  # Get event message
 
-        reply = sql_create_registration(str(event_id), str(ctx.author), self.cursor, self.cnx)
-
-        if "Error" not in reply:
-            event_channel = self.bot.get_channel(self.event_channel_id) # Get event channel
-            msg = await event_channel.fetch_message(event_id)   # Get event message
-
-            team_size = sql_get_team_size(event_id, self.cursor)    # Get size of teams from event
+            team_size = sql_get_team_size(event_id, self.cursor)  # Get size of teams from event
             teams = get_teams_from_embed(msg.embeds[0], team_size)  # Get teams of event
 
             # Place player in team, if error we return
             if get_team_player_count(teams[0]) <= get_team_player_count(teams[1]):
-                teams[0] = add_player_to_team(teams[0], str(ctx.author))
-                if teams[0] == -1:
+                teams[0] = add_player_to_team(teams[0], str(ctx.author))    # Attempt to add player to team
+                if teams[0] == -1:  # Teams are full
                     await ctx.send("Error: can't add user to team, teams are full")
                     return
             else:
-                teams[1] = add_player_to_team(teams[1], ctx.author)
+                teams[1] = add_player_to_team(teams[1], ctx.author) # Add player to second team
 
             # Update teams in event channel
             embed = modify_embed_message_teams(msg.embeds[0], teams)
             await msg.edit(embed=embed)
 
-        await ctx.send(reply)   # Base error case for command
+            await ctx.send("Successfully registered " + str(ctx.author) + " for event " + event_title + "!")
 
     @commands.command()
-    async def delete_registration(self, ctx, event_name):
+    async def delete_registration(self, ctx, event_title):
         """
         Cancel a registration
         :param ctx:
-        :param event_name: name of event to cancel registration for
+        :param event_title: title of event to cancel registration for
         :return: new count of event registrations
         """
-        await ctx.send(sql_delete_registration(event_name, str(ctx.author), self.cursor, self.cnx))
+
+        event_id = get_id_from_title(event_title, self.cursor)
+        if event_id == -1:  # Separate error checking for event (because we will need the id here)
+            await ctx.send("Error: the event you are attempting to remove your registration for does not exist")
+            return  # If no event found, return with error
+
+        try:
+            sql_delete_registration(event_id, str(ctx.author), self.cursor, self.cnx)
+        except UserNotFoundError:
+            await ctx.send("Error: player not found in database")
+        else:
+            event_channel = self.bot.get_channel(self.event_channel_id)  # Get event channel
+            msg = await event_channel.fetch_message(event_id)  # Get event message
+
+            team_size = sql_get_team_size(event_id, self.cursor)  # Get size of teams from event
+            teams = get_teams_from_embed(msg.embeds[0], team_size)  # Get teams of event
+
+            # Remove player from team, if error we return
+            tempTeam0 = remove_player_from_team(teams[0], str(ctx.author))
+            tempTeam1 = remove_player_from_team(teams[1], str(ctx.author))
+
+            if tempTeam0 == -1 and tempTeam1 == -1:
+                await ctx.send("Error: player is not in a team")
+            else:
+                if tempTeam0 != -1:
+                    teams[0] = tempTeam0
+                else:
+                    teams[1] = tempTeam1
+            embed = modify_embed_message_teams(msg.embeds[0], teams)
+            await msg.edit(embed=embed)
+
+            await ctx.send("Successfully removed " + str(ctx.author) + " from event " + event_title + "!")
 
     @commands.command()
     async def query_event(self, ctx, event_name):
@@ -152,7 +192,7 @@ def sql_create_event(data_insert, cursor, cnx):
     :param cnx: MySQL connection for verifying changes
     :return: new event table after update
     """
-    if len(sql_query_event(data_insert['title'], cursor)) > 0:
+    if get_id_from_title(data_insert['title'], cursor) != -1:
         raise ExistingEventError
 
     if int(data_insert['team_size']) <= 0:
@@ -166,7 +206,8 @@ def sql_create_event(data_insert, cursor, cnx):
 
     cursor.execute('insert into event '
                    '(event_id, date, game_id, title, team_size) '
-                   'values (%(event_id)s, %(date)s, %(game_id)s, %(title)s, %(team_size)s)', data_insert)    # add new event
+                   'values (%(event_id)s, %(date)s, %(game_id)s, '
+                   '%(title)s, %(team_size)s)', data_insert) # add new event
     cnx.commit()  # commit changes to database
 
     return embed    # return embed message to send via events channel
@@ -179,23 +220,20 @@ def sql_update_event_id(event_id, title, cursor, cnx):
     cnx.commit()  # commit changes to user table
 
 
-def sql_delete_event(auth_user, title, cursor, cnx):
+def sql_delete_event(auth_user, event_id, cursor, cnx):
     """
     Delete an event based on its title.
     :param auth_user: user requesting the delete (must be an admin to delete events)
-    :param title: title of the event to be deleted
+    :param event_id: id of the event to be deleted
     :param cursor: cursor object for executing command
     :param cnx: connection object for verifying change
     :return: new event table after deletion
     """
     check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
 
-    if len(sql_query_event(title, cursor)) == 0:
-        raise EventNotFoundError
-
-    cursor.execute('delete from event where title = %s', (title, ))  # execute deletion query
+    cursor.execute('delete from event where title = %s', (event_id, ))  # execute deletion query
     cnx.commit()  # commit changes to database
-    cursor.execute('select * from event')  # get new user table
+
     return cursor.fetchall()
 
 
@@ -225,7 +263,7 @@ def sql_create_registration(event_id, user, cursor, cnx):
 
     user_id = get_id_from_name(user, cursor)
     if user_id == -1:
-        return "Error: unable to locate user in database"
+        raise UserNotFoundError
 
     cursor.execute('insert into registration '
                    '(user_id, event_id) '
@@ -233,14 +271,14 @@ def sql_create_registration(event_id, user, cursor, cnx):
     cnx.commit()  # commit changes to database
     cursor.execute('select count(*) from registration where event_id = %s', (event_id,))        # Get registration count
     result = cursor.fetchall()
-    print(result)
+
     return result
 
 
-def sql_delete_registration(title, user, cursor, cnx):
+def sql_delete_registration(event_id, user, cursor, cnx):
     """
     Delete user registration for event based on title
-    :param title: title of the event to delete registration for
+    :param event_id: id of the event to delete registration for
     :param user: the user to delete registration for
     :param cursor: cursor object for executing command
     :param cnx: connection object for verifying change
@@ -248,17 +286,21 @@ def sql_delete_registration(title, user, cursor, cnx):
     """
     user_id = get_id_from_name(user, cursor)
     if user_id == -1:
-        return -1
-
-    event_id = get_id_from_title(title, cursor)
-    if event_id == -1:
-        return -1  # If no event found, return error
+        raise UserNotFoundError
 
     cursor.execute('delete from registration where '
-                   'user_id = %s and event_id = %s', (user_id, event_id,))  # delete user registration
-    cnx.commit()  # commit changes to database
+                   'user_id = %s and event_id = %s', (user_id, event_id))  # delete user registration
+    cnx.commit()    # commit changes to database
     cursor.execute('select count(*) from registration where event_id = %s', (event_id,))  # get count of registered user
+
     return cursor.fetchall()
+
+
+def sql_delete_all_registrations(event_id, cursor, cnx):
+
+    cursor.execute('delete from registration where '
+                   'event_id = %s', (event_id,))
+    cnx.commit()    # commit changes to database
 
 
 def sql_get_team_size(event_id, cursor):
@@ -275,17 +317,6 @@ def sql_get_team_size(event_id, cursor):
         return -1
 
     return result[0][0]  # return event id
-
-
-def update_event_registration(event_id, cursor, cnx):
-    cursor.execute('select user_id from registration where event_id = %s', (event_id,)) # Get user_ids
-    result = cursor.fetchall()
-
-    display_names = []
-    for user_id in result:
-        display_names.append(get_name_from_id(user_id, cursor)) # Places all display_names in list
-
-    #embed = discord.Embed.from_data(embedFromMessage)
 
 
 def sql_query_event(title, cursor):
@@ -309,8 +340,8 @@ def create_embed_message(title, game_date, game_name, teams):
                                 "Title: " + title + "\n" +
                                 "Date: " + game_date.strftime('%m/%d/%y') + "\n" +
                                 "Game: " + game_name + "\n" +
-                                "--------------------------------------------------"
-                          , description="Desc", color=0x0e4d98)
+                                "--------------------------------------------------",
+                          description="", color=0x0e4d98)
     embed.add_field(name="Team 1", value=convert_team_to_text(teams[0]), inline=True)
     embed.add_field(name="Team 2", value=convert_team_to_text(teams[1]), inline=True)
 
@@ -318,6 +349,12 @@ def create_embed_message(title, game_date, game_name, teams):
 
 
 def modify_embed_message_teams(embed, teams):
+    """
+    Modifies an embeded message to send in Discord
+    :param embed: embeded message to modify
+    :param teams: teams to include in embeded message
+    :return: embeded message ready to be sent in Discord containing event details
+    """
     embed.clear_fields()
     embed.add_field(name="Team 1", value=convert_team_to_text(teams[0]), inline=True)
     embed.add_field(name="Team 2", value=convert_team_to_text(teams[1]), inline=True)
@@ -347,6 +384,23 @@ def add_player_to_team(team, display_name):
     for player in team:
         if player == '-----':
             team[count] = display_name
+            return team
+    count += 1
+
+    return -1
+
+
+def remove_player_from_team(team, display_name):
+    """
+        Removes a player from a team
+        :param team: team array to remove player from
+        :param display_name: display_name of player to be removed from a team
+        :return: team array if successful, -1 if unsuccessful (player not in team)
+        """
+    count = 0
+    for player in team:
+        if player == display_name:
+            team[count] = '-----'
             return team
     count += 1
 

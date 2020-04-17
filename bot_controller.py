@@ -1,4 +1,6 @@
 import configparser
+
+import discord
 from discord.ext import commands
 import mysql.connector
 from backend.lib.user_queries import UserQueries
@@ -36,6 +38,7 @@ def main():
         on_ready() is called when the bot is signed in to Discord and ready to send/receive event notifications
         :return: none; print ready status to console
         """
+        await client.change_presence(activity=discord.Game(name='Event Management'))
         print('We have logged in as {0.user}'.format(client))
 
     # RUN THE BOT #
