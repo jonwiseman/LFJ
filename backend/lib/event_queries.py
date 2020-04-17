@@ -5,8 +5,8 @@ from datetime import date
 import discord
 from discord.ext import commands
 from backend.lib.game_queries import get_game_id
-from backend.lib.helper_commands import check_admin_status, get_name_from_id, get_id_from_title, get_game_name, \
-    AdminPermissionError, GameNotFoundError
+from backend.lib.helper_commands import check_admin_status, get_id_from_name, get_name_from_id, \
+    get_id_from_title, get_game_name, AdminPermissionError, GameNotFoundError
 from mysql.connector.errors import IntegrityError
 
 
@@ -21,6 +21,7 @@ class EventQueries(commands.Cog):
     async def create_event(self, ctx, event_title, event_date, game_name, team_size):
         """
         Create new event
+        #param ctx:
         :param event_title: title of event
         :param event_date: date of event (formatted DD/MM/YYYY)
         :param game_name: title of game to be played\
@@ -50,14 +51,15 @@ class EventQueries(commands.Cog):
         except TeamSizeError:
             await ctx.send("Error: team size must be above 0")
         else:
-            text_channel = self.bot.get_channel(self.event_channel_id)
-            msg = await text_channel.send(embed=message)
+            event_channel = self.bot.get_channel(self.event_channel_id)
+            msg = await event_channel.send(embed=message)
             sql_update_event_id(msg.id, event_title, self.cursor, self.cnx)
 
     @commands.command()
     async def delete_event(self, ctx, title):
         """
         Delete an event
+        :param ctx:
         :param title: title of event
         :return: new event table or error message
         """
@@ -74,23 +76,53 @@ class EventQueries(commands.Cog):
     async def get_events(self, ctx):
         """
         Get all events
+        :param ctx:
         :return: list of all scheduled events
         """
         await ctx.send(sql_get_events(self.cursor))
 
     @commands.command()
-    async def create_registration(self, ctx, event_name):
+    async def create_registration(self, ctx, event_title):
         """
         Register for an event
-        :param event_name: event's title
+        :param ctx:
+        :param event_title: event's title
         :return: new count of event registrations
         """
-        await ctx.send(sql_create_registration(event_name, str(ctx.author), self.cursor, self.cnx))
+        event_id = get_id_from_title(event_title, self.cursor)
+        if event_id == -1:
+            await ctx.send("Error: no event with name \'" + event_title + "\' found")
+            return  # If no event found, return with error
+
+        reply = sql_create_registration(str(event_id), str(ctx.author), self.cursor, self.cnx)
+
+        if "Error" not in reply:
+            event_channel = self.bot.get_channel(self.event_channel_id) # Get event channel
+            msg = await event_channel.fetch_message(event_id)   # Get event message
+
+            team_size = sql_get_team_size(event_id, self.cursor)    # Get size of teams from event
+            teams = get_teams_from_embed(msg.embeds[0], team_size)  # Get teams of event
+
+            # Place player in team, if error we return
+            if get_team_player_count(teams[0]) <= get_team_player_count(teams[1]):
+                teams[0] = add_player_to_team(teams[0], str(ctx.author))
+                if teams[0] == -1:
+                    await ctx.send("Error: can't add user to team, teams are full")
+                    return
+            else:
+                teams[1] = add_player_to_team(teams[1], ctx.author)
+
+            # Update teams in event channel
+            embed = modify_embed_message_teams(msg.embeds[0], teams)
+            await msg.edit(embed=embed)
+
+        await ctx.send(reply)   # Base error case for command
 
     @commands.command()
     async def delete_registration(self, ctx, event_name):
         """
         Cancel a registration
+        :param ctx:
         :param event_name: name of event to cancel registration for
         :return: new count of event registrations
         """
@@ -100,6 +132,7 @@ class EventQueries(commands.Cog):
     async def query_event(self, ctx, event_name):
         """
         Inspect an event
+        :param ctx:
         :param event_name: event's title
         :return: information about that event
         """
@@ -128,7 +161,8 @@ def sql_create_event(data_insert, cursor, cnx):
     team_size = int(data_insert['team_size'])
     teams = create_blank_teams(team_size)
 
-    embed = create_embed_message(data_insert['title'], data_insert['date'], data_insert['game_id'], teams, cursor)
+    embed = create_embed_message(data_insert['title'], data_insert['date'],
+                                 get_game_name(data_insert['game_id'], cursor), teams) # Created embeded message
 
     cursor.execute('insert into event '
                    '(event_id, date, game_id, title, team_size) '
@@ -179,24 +213,19 @@ def sql_get_events(cursor):
     return 'Event ID\tDate\tEvent Title\tGame\n' + event_list
 
 
-def sql_create_registration(title, user, cursor, cnx):
+def sql_create_registration(event_id, user, cursor, cnx):
     """
     Register user for event based on title
-    :param title: title of the event to register for
+    :param event_id: event id to create registration for
     :param user: the user to register for
     :param cursor: cursor object for executing command
     :param cnx: connection object for verifying change
     :return: count of users registered for the event
     """
-    cursor.execute('select user_id from user where display_name = %s', (user,))
-    result = cursor.fetchall()
-    if len(result) == 0:  # user not found
-        return -1
-    user_id = result[0][0]
 
-    event_id = get_id_from_title(title, cursor)
-    if event_id == -1:
-        return -1   # If no event found, return error
+    user_id = get_id_from_name(user, cursor)
+    if user_id == -1:
+        return "Error: unable to locate user in database"
 
     cursor.execute('insert into registration '
                    '(user_id, event_id) '
@@ -217,11 +246,9 @@ def sql_delete_registration(title, user, cursor, cnx):
     :param cnx: connection object for verifying change
     :return: count of users registered for the event
     """
-    cursor.execute('select user_id from user where display_name = %s', (user,))
-    result = cursor.fetchall()
-    if len(result) == 0:  # user not found
+    user_id = get_id_from_name(user, cursor)
+    if user_id == -1:
         return -1
-    user_id = result[0][0]
 
     event_id = get_id_from_title(title, cursor)
     if event_id == -1:
@@ -232,6 +259,22 @@ def sql_delete_registration(title, user, cursor, cnx):
     cnx.commit()  # commit changes to database
     cursor.execute('select count(*) from registration where event_id = %s', (event_id,))  # get count of registered user
     return cursor.fetchall()
+
+
+def sql_get_team_size(event_id, cursor):
+    """
+    Gets the team size from event id
+    :param event_id: event id to get team size for
+    :param cursor: cursor object for executing command
+    :return: team size of event
+    """
+    cursor.execute('select team_size from event where event_id = %s', (event_id,))
+    result = cursor.fetchall()
+
+    if len(result) == 0:  # event not found
+        return -1
+
+    return result[0][0]  # return event id
 
 
 def update_event_registration(event_id, cursor, cnx):
@@ -253,13 +296,29 @@ def sql_query_event(title, cursor):
 # TEAMS AND EMBEDED MESSAGES #
 
 
-def create_embed_message(title, game_date, game_id, teams, cursor):
+def create_embed_message(title, game_date, game_name, teams):
+    """
+    Creates an embeded message to send in Discord
+    :param title: game title from event
+    :param game_date: game date from event
+    :param game_name: game name from event (convert from game_id first)
+    :param teams: teams for event
+    :return: embeded message ready to be sent in Discord containing event details
+    """
     embed = discord.Embed(title="--------------------------------------------------\n" +
                                 "Title: " + title + "\n" +
                                 "Date: " + game_date.strftime('%m/%d/%y') + "\n" +
-                                "Game: " + get_game_name(game_id, cursor) + "\n" +
+                                "Game: " + game_name + "\n" +
                                 "--------------------------------------------------"
-                          , description="Desc", color=0x00ff00)
+                          , description="Desc", color=0x0e4d98)
+    embed.add_field(name="Team 1", value=convert_team_to_text(teams[0]), inline=True)
+    embed.add_field(name="Team 2", value=convert_team_to_text(teams[1]), inline=True)
+
+    return embed
+
+
+def modify_embed_message_teams(embed, teams):
+    embed.clear_fields()
     embed.add_field(name="Team 1", value=convert_team_to_text(teams[0]), inline=True)
     embed.add_field(name="Team 2", value=convert_team_to_text(teams[1]), inline=True)
 
@@ -267,12 +326,53 @@ def create_embed_message(title, game_date, game_id, teams, cursor):
 
 
 def create_blank_teams(team_size):
+    """
+    Creates a set of 2 blank teams
+    :param team_size: size of team to be created
+    :return: blank team array of size team_size
+    """
     teams = [['-----'] * team_size] * 2
 
     return teams
 
 
+def add_player_to_team(team, display_name):
+    """
+    Adds a player to a team
+    :param team: team array to add player to
+    :param display_name: display_name of player to be added to team
+    :return: team array if successful, -1 if unsuccessful (full team)
+    """
+    count = 0
+    for player in team:
+        if player == '-----':
+            team[count] = display_name
+            return team
+    count += 1
+
+    return -1
+
+
+def get_team_player_count(team):
+    """
+    Gets the count of players in a given team
+    :param team: team to get count for
+    :return: count of players in team
+    """
+    count = 0
+    for player in team:
+        if player != '-----':
+            count += 1
+
+    return count
+
+
 def convert_team_to_text(team):
+    """
+    Converts a team to text sendable in Discord
+    :param team: team array to be converted to message text
+    :return: text able to be messaged in Discord with team players
+    """
     team_text = ''
     for player in team:
         team_text += player + "\n"
@@ -282,6 +382,7 @@ def convert_team_to_text(team):
 
 def get_teams_from_embed(embed, team_size):
     """
+    Gets teams from embeded message
     :param embed: embeded message to decode teams from
     :param team_size: team size for event
     :return: two lists for Team 1 and Team 2 containing display_names for registered players
@@ -317,3 +418,7 @@ class DateFormatError(Error):
 
 class TeamSizeError(Error):
     """User supplied incorrect team size (team_size <= 0)"""
+
+
+class TeamFullError(Error):
+    """Event team is already full"""
