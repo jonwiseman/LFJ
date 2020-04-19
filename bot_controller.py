@@ -5,6 +5,7 @@ from backend.lib.user_queries import UserQueries
 from backend.lib.game_queries import GameQueries
 from backend.lib.event_queries import EventQueries
 from backend.lib.helper_commands import HelperCommands
+from backend.lib.performance_queries import PerformanceQueries
 
 
 def main():
@@ -57,6 +58,7 @@ def main():
     client.add_cog(UserQueries(client, cursor, cnx))
     client.add_cog(GameQueries(client, cursor, cnx))
     client.add_cog(EventQueries(client, cursor, cnx))
+    client.add_cog(PerformanceQueries(client, cursor, cnx))
     client.run(token)
 
 
