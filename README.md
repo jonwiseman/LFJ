@@ -27,7 +27,7 @@ Run the following command:
 
 FOLDER: name of folder to clone repository into
 
-**Creating a Virtual Environment**
+**Creating a Virtual Environment**  
 It's good practice to create a virtual environment for each one of your projects.  You can think of it like a separate Python installation for a project.  Creating a new virtual environment is simple: navigate to LFJ's root directory and run the following command:
 
 `python3 -m venv env`
@@ -42,22 +42,22 @@ On Linux, run:
 
 You should now see a little (env) before your command line, indicating that you are running in a virtual environment.
 
-**Installing Python Requirements**
+**Installing Python Requirements**  
 With your virtual environment running, navigate to the LFJ/Docs folder.  To install all of the Python requirements needed to run LFJ, execute the following command:
 
 `pip install -r Docs/requirements.txt`
 
 This will read all of the requirements and install them via pip.
 
-**Constructing the configuration.conf File**
+**Constructing the configuration.conf File**  
 To maintain data security (such as database usernames and passwords, and the bot's unique Discord token), you must maintain a configuration file that is parsed by many of LFJ's scripts.  The format is as follows:
 
-[Discord]
+[Discord]  
 token =   
 event_channel_id =   
 prefix =
 
-[Database]
+[Database]  
 username =   
 password =   
 host =   
@@ -69,7 +69,7 @@ Creating a configuration file is simple: create a simple text file, copy and pas
 The next step is to initialize the backend database.  Open MySQL (either through the workbench - my preferred option - or through its command line) and run the lfj.sql script (located under LFJ/Database).  This script creates the database and initializes the user table with a single entry: jon_wiseman#8494 with admin status.  Don't worry, you can add yourself to the database later via the LFJ bot in Discord or run init_db.py and add yourself in manually.  The backend scripts are run such that only an admin can add, delete, or update users; additionally, an admin cannot delete another admin user (so be careful adding in new users via LFJ: if you add an admin, you'll have to manually remove him via MySQL queries or using the init_db.py script).  Admin status is either 0 (NOT an admin) or 1 (IS an admin).
 
 **Starting the Bot**  
-The bot's functionality is divided into modules: each script in the LFJ/Scripts folder controls one of the bot's functions (such as querying the user table or adding events).  To run the bot, you need only run bot_controller.py.  After the bot is running, you should see his status turn to green in Discord.  Do not interact with the bot via the command line; after the bot is started, only send it commands via Discord.  A list of commands you can use to interact with the bot are available in the [Available Commands](https://github.com/jonwiseman/LFJ/wiki/2.-Available-Commands) section.
+The bot's functionality is divided into modules: each script in the LFJ/Scripts folder controls one of the bot's functions (such as querying the user table or adding events).  To run the bot, you need only run bot_controller.py.  After the bot is running, you should see his status turn to green in Discord.  Do not interact with the bot via the command line; after the bot is started, only send it commands via Discord.  A list of commands you can use to interact with the bot are available in the [Available Commands](https://github.com/jonwiseman/LFJ#available-commands) section.
 
 ## Available Commands  
 There are eighteen commands available in LFJ right now, organized into 5 categories:
