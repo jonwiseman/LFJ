@@ -1,6 +1,7 @@
 from discord.ext import commands
 from mysql.connector.errors import IntegrityError
-from backend.lib.helper_commands import check_admin_status, AdminPermissionError
+from backend.lib.helper_commands import check_admin_status, get_id_from_name, get_game_id, \
+    AdminPermissionError, GameNotFoundError
 
 
 class GameQueries(commands.Cog):
@@ -205,7 +206,7 @@ def sql_set_membership(auth_user, game_name, skill_level, cursor, cnx):
     :param cnx: connection object to commit changes
     :return: 1 if there is an error, response text if successful
     """
-    user_id = get_user_id(auth_user, cursor)  # gets user_id from display_name
+    user_id = get_id_from_name(auth_user, cursor)  # gets user_id from display_name
 
     if user_id == -1:  # user not found
         return 1
@@ -238,7 +239,7 @@ def sql_delete_membership(auth_user, game_name, cursor, cnx):
     :param cnx: connection object to commit changes
     :return: 1 if there is an error, response text if successful
     """
-    user_id = get_user_id(auth_user, cursor)  # gets user_id from display_name
+    user_id = get_id_from_name(auth_user, cursor)  # gets user_id from display_name
 
     if user_id == -1:  # user not found
         return 1
@@ -259,22 +260,6 @@ def sql_delete_membership(auth_user, game_name, cursor, cnx):
     return "Deleted " + auth_user + " from " + game_name
 
 
-def get_game_id(game_name, cursor):
-    """
-    Gets a game id from game name
-    :param game_name: name of a game to get id for
-    :param cursor: cursor object for executing search query
-    :return: -1 if game does not exist, game_id if game is found
-    """
-    cursor.execute('select game_id from game where name = %s', (game_name,))
-    result = cursor.fetchall()
-
-    if len(result) == 0:  # game not found
-        raise GameNotFoundError
-
-    return result[0][0]  # return game id
-
-
 def check_membership(user_id, game_id, cursor):
     """
     Check to see if a given user has membership to a game
@@ -292,21 +277,6 @@ def check_membership(user_id, game_id, cursor):
     return result[0][0]  # return user id
 
 
-def get_user_id(display_name, cursor):
-    """
-    Gets a user id from display name of a user
-    :param display_name: display name of user whose id will be gotten
-    :param cursor: cursor object for executing search query
-    :return: -1 if user does not exist, user_id if user is found
-    """
-    cursor.execute('select user_id from user where display_name = %s', display_name)
-    result = cursor.fetchall()
-
-    if len(result) == 0:  # user not found
-        return -1
-
-    return result[0][0]  # return user id
-
 # ERRORS #
 
 
@@ -316,7 +286,3 @@ class Error(Exception):
 
 class ExistingGameError(Error):
     """Trying to create a game that already exists."""
-
-
-class GameNotFoundError(Error):
-    """Trying to modify a game that does not exist."""
