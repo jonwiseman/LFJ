@@ -23,7 +23,7 @@ class EventQueries(commands.Cog):
     async def create_event(self, ctx, event_title, event_date, game_name, team_size):
         """
         Create new event
-        :param ctx:
+        :param ctx: command parameter
         :param event_title: title of event
         :param event_date: date of event (formatted DD/MM/YYYY)
         :param game_name: title of game to be played\
@@ -55,7 +55,9 @@ class EventQueries(commands.Cog):
         else:
             event_channel = self.bot.get_channel(self.event_channel_id)
             msg = await event_channel.send(embed=message)
-            sql_update_event_id(msg.id, event_title, self.cursor, self.cnx)
+            sql_update_event_id(msg.id, event_title, self.cursor, self.cnx) # Set event_id in database
+            await msg.add_reaction('☑')   # Add accept emoji to message
+            await msg.add_reaction('🇽')    # Add decline emoji to message
 
             await ctx.send("Successfully created event " + event_title + "!")
 
@@ -63,7 +65,7 @@ class EventQueries(commands.Cog):
     async def delete_event(self, ctx, event_title):
         """
         Delete an event
-        :param ctx:
+        :param ctx: command parameter
         :param event_title: title of event
         :return: new event table or error message
         """
@@ -78,13 +80,17 @@ class EventQueries(commands.Cog):
             await ctx.send("Permission error: only admins may delete events")
         else:
             sql_delete_all_registrations(event_id, self.cursor, self.cnx)   # Remove all registrations for event
+            event_channel = self.bot.get_channel(self.event_channel_id) # Get event channel
+            msg = await event_channel.fetch_message(event_id)  # Get event message
+            await msg.delete()
+
             await ctx.send("Successfully deleted event " + event_title + "!")
 
     @commands.command()
     async def get_events(self, ctx):
         """
         Get all events
-        :param ctx:
+        :param ctx: command parameter
         :return: list of all scheduled events
         """
         await ctx.send(sql_get_events(self.cursor))
@@ -93,7 +99,7 @@ class EventQueries(commands.Cog):
     async def create_registration(self, ctx, event_title):
         """
         Register for an event
-        :param ctx:
+        :param ctx: command parameter
         :param event_title: event's title
         :return: new count of event registrations
         """
@@ -105,6 +111,8 @@ class EventQueries(commands.Cog):
             sql_create_registration(str(event_id), str(ctx.author), self.cursor, self.cnx)
         except UserNotFoundError:
             await ctx.send("Error: player not found in database")
+        except ExistingRegistrationError:
+            await ctx.send("Error: player is already registered for this event")
         else:
             event_channel = self.bot.get_channel(self.event_channel_id)  # Get event channel
             msg = await event_channel.fetch_message(event_id)  # Get event message
@@ -131,7 +139,7 @@ class EventQueries(commands.Cog):
     async def delete_registration(self, ctx, event_title):
         """
         Cancel a registration
-        :param ctx:
+        :param ctx: command parameter
         :param event_title: title of event to cancel registration for
         :return: new count of event registrations
         """
@@ -172,7 +180,7 @@ class EventQueries(commands.Cog):
     async def query_event(self, ctx, event_name):
         """
         Inspect an event
-        :param ctx:
+        :param ctx: command parameter
         :param event_name: event's title
         :return: information about that event
         """
@@ -231,10 +239,8 @@ def sql_delete_event(auth_user, event_id, cursor, cnx):
     """
     check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
 
-    cursor.execute('delete from event where title = %s', (event_id, ))  # execute deletion query
+    cursor.execute('delete from event where event_id = %s', (event_id, ))  # execute deletion query
     cnx.commit()  # commit changes to database
-
-    return cursor.fetchall()
 
 
 def sql_get_events(cursor):
@@ -264,6 +270,12 @@ def sql_create_registration(event_id, user, cursor, cnx):
     user_id = get_id_from_name(user, cursor)
     if user_id == -1:
         raise UserNotFoundError
+
+    cursor.execute('select user_id from registration where user_id = %s and event_id = %s', (user_id, event_id))
+    result = cursor.fetchall()
+
+    if len(result) != 0:  # user already registered for event
+        raise ExistingRegistrationError
 
     cursor.execute('insert into registration '
                    '(user_id, event_id) '
@@ -394,7 +406,7 @@ def remove_player_from_team(team, display_name):
     """
         Removes a player from a team
         :param team: team array to remove player from
-        :param display_name: display_name of player to be removed from a team
+        :param display_name: display name of player to be removed from a team
         :return: team array if successful, -1 if unsuccessful (player not in team)
         """
     count = 0
@@ -403,6 +415,20 @@ def remove_player_from_team(team, display_name):
             team[count] = '-----'
             return team
     count += 1
+
+    return -1
+
+
+def is_player_on_team(team, display_name):
+    """
+    Gets if player is on a team or not
+    :param team: team array to check if player is in
+    :param display_name: display name of player to check if they belong to a team
+    :return: 1 if player is on team, -1 if player isn't on team
+    """
+    for player in team:
+        if player == display_name:
+            return 1
 
     return -1
 
@@ -460,6 +486,10 @@ class Error(Exception):
 
 class ExistingEventError(Error):
     """Trying to create an event that already exists."""
+
+
+class ExistingRegistrationError(Error):
+    """Trying to register for an event a player already belongs to."""
 
 
 class EventNotFoundError(Error):
