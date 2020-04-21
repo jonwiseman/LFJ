@@ -272,6 +272,20 @@ This command can be used to update a user's skill level for a given game. The sy
 GAME: game name for updating skill level (CSGO, LOL, RL)
 SKILL_LEVEL: skill ranking for game being updated (NUMERIC)
 
+**Getting a Template to Enter Event Statistics**  
+This command can be used to retrieve a template to upload stats based on the registered players. The syntax for this command is as follows:
+
+`$perf_template EVENT_NAME`
+
+EVENT_NAME: title of the event to request registered players template for
+
+**Updating Performance Information**
+This command can be used to update statistics based on a csv template file. To use this command upload a modified csv template file and use the comment:
+
+`$perf_update`
+
+This will Update/Insert performance data based off of the provided CSV file
+
 **Getting Help**
 The help command can be used to get help from the bot regarding available commands and specific command syntax.  Running the command without supplying an additional argument will return a list of all available commands. The syntax for this command is as follows:
 
