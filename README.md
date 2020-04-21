@@ -72,7 +72,7 @@ The next step is to initialize the backend database.  Open MySQL (either through
 The bot's functionality is divided into modules: each script in the LFJ/Scripts folder controls one of the bot's functions (such as querying the user table or adding events).  To run the bot, you need only run bot_controller.py.  After the bot is running, you should see his status turn to green in Discord.  Do not interact with the bot via the command line; after the bot is started, only send it commands via Discord.  A list of commands you can use to interact with the bot are available in the [Available Commands](https://github.com/jonwiseman/LFJ#available-commands) section.
 
 ## Available Commands  
-There are twenty-one commands available in LFJ right now, organized into 6 categories:
+There are nineteen commands available in LFJ right now, organized into 6 categories:
 
 **User Queries**  
 These are queries that allow interaction with the user table:
@@ -98,25 +98,23 @@ These are queries that allow interaction with the event and registration tables:
 11. delete_event
 12. get_events
 13. query_event
-14. create_registration
-15. delete_registration
 
 **Membership Queries**
 These are queries that allow interaction with the membership table:
 
-16. create_membership
-17. delete_membership
+14. create_membership
+15. delete_membership
 
 **Performance Queries**  
 These are commands that allow the input of game statistics.
 
-18. perf_template  
-19. update_perf  
+16. perf_template  
+17. update_perf  
 
 **Miscellaneous Commands**
 
-20. help
-21. exit
+18. help
+19. exit
 
 You can specify which prefix is used to address the bot by changing the configuration file.
 
