@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 09, 2020 at 06:04 PM
+-- Generation Time: Apr 21, 2020 at 02:46 AM
 -- Server version: 10.4.8-MariaDB
 -- PHP Version: 7.1.33
 
@@ -29,10 +29,11 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `event` (
-  `event_id` int(11) NOT NULL,
+  `event_id` bigint(20) NOT NULL,
   `date` date NOT NULL,
   `game_id` int(11) NOT NULL,
-  `title` varchar(45) NOT NULL
+  `title` varchar(45) NOT NULL,
+  `team_size` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -83,7 +84,7 @@ INSERT INTO `membership` (`user_id`, `game_id`, `skill_level`) VALUES
 
 CREATE TABLE `performance` (
   `user_id` int(11) NOT NULL,
-  `event_id` int(11) NOT NULL,
+  `event_id` bigint(20) NOT NULL,
   `kills` int(11) NOT NULL,
   `deaths` int(11) NOT NULL,
   `win` int(11) NOT NULL,
@@ -100,8 +101,8 @@ CREATE TABLE `performance` (
 
 CREATE TABLE `registration` (
   `user_id` int(11) NOT NULL,
-  `event_id` int(11) NOT NULL,
-  `date` datetime NOT NULL
+  `event_id` bigint(20) NOT NULL,
+  `date` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------

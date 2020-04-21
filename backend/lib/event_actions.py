@@ -1,9 +1,9 @@
 from discord.ext import commands
-
 from backend.lib.event_queries import sql_create_registration, get_team_player_count, sql_get_team_size, \
     get_teams_from_embed, add_player_to_team, modify_embed_message_teams, sql_delete_registration, \
     remove_player_from_team, ExistingRegistrationError
 from backend.lib.user_queries import UserNotFoundError
+from discord.errors import Forbidden
 
 
 class EventActions(commands.Cog):
@@ -30,6 +30,8 @@ class EventActions(commands.Cog):
                 except ExistingRegistrationError:
                     # Do nothing here
                     pass
+                except Forbidden:
+                    pass
                 else:   # Attempt to add user to team
                     team_size = sql_get_team_size(payload.message_id, self.cursor)  # Get size of teams from event
                     teams = get_teams_from_embed(msg.embeds[0], team_size)  # Get teams of event
@@ -50,6 +52,8 @@ class EventActions(commands.Cog):
                     sql_delete_registration(payload.message_id, str(user), self.cursor, self.cnx)
                 except UserNotFoundError:
                     # Do nothing here
+                    pass
+                except Forbidden:
                     pass
                 else:
                     event_channel = self.bot.get_channel(self.event_channel_id)  # Get event channel
@@ -73,4 +77,7 @@ class EventActions(commands.Cog):
                     embed = modify_embed_message_teams(msg.embeds[0], teams)
                     await msg.edit(embed=embed)
 
-            await msg.remove_reaction(payload.emoji, user)
+            try:
+                await msg.remove_reaction(payload.emoji, user)
+            except Forbidden:
+                pass
