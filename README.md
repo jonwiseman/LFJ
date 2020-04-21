@@ -1,4 +1,4 @@
-[![CodeFactor](https://www.codefactor.io/repository/github/jonwiseman/lfj/badge)](https://www.codefactor.io/repository/github/jonwiseman/lfj)  [![buddy pipeline](https://app.buddy.works/bowlian/lfj/pipelines/pipeline/249265/badge.svg?token=ab2372452e6e3f91c0b0f43ce4d2b5f58e6e232abaaf685199102b62422cc5d7 "buddy pipeline")](https://app.buddy.works/bowlian/lfj/pipelines/pipeline/249265)
+[![CodeFactor](https://www.codefactor.io/repository/github/jonwiseman/lfj/badge)](https://www.codefactor.io/repository/github/jonwiseman/lfj)  [![buddy pipeline][![buddy pipeline](https://app.buddy.works/bowlian/lfj/pipelines/pipeline/251746/badge.svg?token=ab2372452e6e3f91c0b0f43ce4d2b5f58e6e232abaaf685199102b62422cc5d7 "buddy pipeline")](https://app.buddy.works/bowlian/lfj/pipelines/pipeline/251746)
 
 This repository contains files related to the final project for CS341: Software Engineering.
 
