@@ -11,11 +11,12 @@ This project aims to create a Discord bot for Elizabethtown College's E-Sports t
 5. Relevant statistics collection and querying
 
 ## Requirements
-In order to use the LFJ bot, you will need two things:
+In order to use the LFJ bot, you will need four things:
 
-1. An installation of Python 3.7 (for installing prerequesites and running the main bot file)
-2. An installation of MySQL (for building and utilizing the database backend)
-3. The LFJ bot token (for signing the bot in to Discord)
+1. An installation of Python 3.7 (for installing prerequesites and running the main bot file)  
+2. An installation of MySQL (for building and utilizing the database backend)  
+3. A Discord account
+4. The LFJ bot token (for signing the bot in to Discord)
 
 ## Start Guide
 
@@ -63,10 +64,38 @@ password =
 host =   
 database =   
 
-Creating a configuration file is simple: create a simple text file, copy and paste the above text, fill in the required information (don't worry about putting quotations around Strings or anything like that), and save the file as configuration.conf.  Keep the configuration file in the project's root directory (i.e. not inside any folder; keep it next to the .gitignore file and the README).  To make sure that the token and database information is kept private, make sure that configuration.conf is listed in the .gitignore (this keeps it from being pushed to Github).
+Creating a configuration file is simple: create a simple text file, copy and paste the above text, fill in the required information (don't worry about putting quotations around Strings or anything like that), and save the file as configuration.conf.  Keep the configuration file in the project's root directory (i.e. not inside any folder; keep it next to the .gitignore file and the README).  To make sure that the token and database information is kept private, make sure that configuration.conf is listed in the .gitignore (this keeps it from being pushed to Github).  Don't worry about the Discord section yet: we'll cover it below in the "Setting up Discord and Creating a Bot" subsection.
 
 **Building the Database**    
 The next step is to initialize the backend database.  Open MySQL (either through the workbench - my preferred option - or through its command line) and run the lfj.sql script (located under LFJ/Database).  This script creates the database and initializes the user table with a single entry: jon_wiseman#8494 with admin status.  Don't worry, you can add yourself to the database later via the LFJ bot in Discord or run init_db.py and add yourself in manually.  The backend scripts are run such that only an admin can add, delete, or update users; additionally, an admin cannot delete another admin user (so be careful adding in new users via LFJ: if you add an admin, you'll have to manually remove him via MySQL queries or using the init_db.py script).  Admin status is either 0 (NOT an admin) or 1 (IS an admin).
+
+**Setting up Discord and Creating a Bot**  
+In order to use LFJ, you'll need a Discord account, a registered bot, and that bot's token.  Creating a Discord account is easy: just head on over to [Discord](https://discordapp.com/login) and register your account.  Now that you've got a Discord account, you'll need to create a bot account that can run LFJ's scripts.  The steps are fairly straightforward:
+
+1. Head to the application developer [portal](https://discordapp.com/developers/applications/)  
+2. Create a new application by selecting the button at the top right  
+3. Give your new application a name  
+4. Navigate to the bot settings using the right-hand list  
+5. Add a new bot by selecting the button on the right side of the screen  
+6. Give your new bot a name  
+
+Now that you've got a bot, you can enter the bot's token to your configuration file!  You can copy it from the bot's overview on the application page.  Please note that if you post your secret token online, Discord will automatically generate a new token for security.  With the bot created, we can organize our server appropriately.  To create a new server, follow these steps:  
+
+1. Open Discord  
+2. On the left-hand side of the screen, select the green plus icon to create a new server  
+3. Confirm that you want to create a server and give it a name  
+
+LFJ requires that your server has a channel named events so that it can notify users about upcoming events and allow them to register for them.  On the left-hand side of the screen under the "Text Channels" dropdown, click the plus to create a new text channel.  Name it "events" so that the bot can find it on startup; no caps, no punctuation, all lowercase.  Next, we'll need to get this channel's unique ID to supply to our configuration file.  To do this, you'll need to enable Developer Mode:  
+
+1. Open Discord  
+2. Navigate to User Settings (located next to your display name at the bottom left)  
+3. Click on Appearance on the left-hand side  
+4. Scroll down to Advanced  
+5. Enable Developer Mode  
+
+Now go back to your server, right click on the events channel, and select Copy ID.  Paste this numeric ID into the configuration file under event_channel_id.  Finally, you'll need to invite your bot to the server.  Navigate back to the Developer Portal and select the application again.  Under OAuth2, select bot under Scopes.  Give your bot the permissions it requires, and then copy the URL from the Scopes section.  Follow that URL and add your bot to the server you created before.
+
+If these directions are confusing, [here's](https://discordpy.readthedocs.io/en/latest/discord.html) a helpful link that might explain it better.  You can also navigate to the Wiki where there's a more detailed guide with photos.
 
 **Starting the Bot**  
 The bot's functionality is divided into modules: each script in the LFJ/Scripts folder controls one of the bot's functions (such as querying the user table or adding events).  To run the bot, you need only run bot_controller.py.  After the bot is running, you should see his status turn to green in Discord.  Do not interact with the bot via the command line; after the bot is started, only send it commands via Discord.  A list of commands you can use to interact with the bot are available in the [Available Commands](https://github.com/jonwiseman/LFJ#available-commands) section.
@@ -83,7 +112,7 @@ These are queries that allow interaction with the user table:
 4. set_email
 5. set_admin
 
-**Game Queries**
+**Game Queries**  
 These are queries that allow interaction with the game table:
 
 6. add_game
@@ -91,7 +120,7 @@ These are queries that allow interaction with the game table:
 8. query_game
 9. set_game_name
 
-**Event Queries**
+**Event Queries**  
 These are queries that allow interaction with the event and registration tables:
 
 10. create_event
@@ -99,7 +128,7 @@ These are queries that allow interaction with the event and registration tables:
 12. get_events
 13. query_event
 
-**Membership Queries**
+**Membership Queries**  
 These are queries that allow interaction with the membership table:
 
 14. create_membership
@@ -111,7 +140,7 @@ These are commands that allow the input of game statistics.
 16. perf_template  
 17. update_perf  
 
-**Miscellaneous Commands**
+**Miscellaneous Commands**  
 
 18. help
 19. exit
