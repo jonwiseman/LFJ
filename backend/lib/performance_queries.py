@@ -4,6 +4,7 @@ from backend.lib.helper_commands import check_admin_status, AdminPermissionError
 from urllib import request
 from io import BytesIO
 
+
 class PerformanceQueries(commands.Cog):
     def __init__(self, bot, cursor, cnx):
         self.bot = bot
@@ -29,7 +30,7 @@ class PerformanceQueries(commands.Cog):
                     file = file_pointer.readlines()
                     if file[0].index(b'user_id,event_id,kills,deaths,win,length,win_score,lose_score') > -1:
                         records = csv2dicts(file)
-                        inserts, updates = 0,0
+                        inserts, updates = 0, 0
                         for record in records:
                             u = sql_perf_update(record, self.cursor, self.cnx)
                             if u:
