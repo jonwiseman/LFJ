@@ -1,6 +1,6 @@
 from discord.ext import commands
 from discord import File as dFile
-from backend.lib.helper_commands import check_admin_status, AdminPermissionError
+from backend.lib.helper_commands import check_admin_status, get_id_from_title, get_registrations, InvalidEventTitleError, RegistrationEmptyError, AdminPermissionError
 from urllib import request
 from io import BytesIO
 
@@ -50,17 +50,35 @@ class PerformanceQueries(commands.Cog):
 
     @commands.command()
     async def perf_template(self, ctx, event_name):
-        event_id = get_event_id(self.cursor, event_name)
-        registered = sql_get_registrations(self.cursor, event_id)
+        try:
+            filename, fil = sql_fetch_template(self, event_name)
+        except InvalidEventTitleError:
+            await ctx.send("No event found with the title '%s'" % event_name)
+        except RegistrationEmptyError:
+            await ctx.send("There are no users registered for this event. A template could not be generated.")
+        else:
+            await ctx.send(file=dFile(fil, filename))
+            fil.close()
+
+
+def sql_fetch_template(self, event_name):
+    try:
+        event_id = get_id_from_title(self.cursor, event_name)
+        registered = get_registrations(self.cursor, event_id)
+    except InvalidEventTitleError:
+        raise InvalidEventTitleError
+    except RegistrationEmptyError:
+        raise RegistrationEmptyError
+        pass
+    else:
         header = 'display_name,user_id,event_id,kills,deaths,win,length,win_score,lose_score\r\n'
-        filname = event_name + ".csv"
+        filename = event_name.replace(" ", "_") + ".csv"
         fil = BytesIO()
         fil.write(bytes(header, "utf-8"))
         for u in registered:
             fil.write(bytes("%s,%s,%s,,,,,,\r\n" % (u[0], u[1], event_id), "utf-8"))
         fil.seek(0)
-        await ctx.send(file=dFile(fil, filname))
-        fil.close()
+        return filename, fil
 
 
 def sql_perf_update(data_insert, cursor, cnx):
@@ -81,18 +99,6 @@ def sql_perf_update(data_insert, cursor, cnx):
         u = True
     cnx.commit()  # commit changes to database
     return u
-
-
-def get_event_id(cursor,title):
-    cursor.execute('select event_id from event where title = %s', (title,))
-    return cursor.fetchall()[0][0]
-
-
-def sql_get_registrations(cursor, event):
-    cursor.execute('select user.display_name, registration.user_id from registration inner join user '
-                   'on user.user_id  = registration.user_id where event_id = %s', (event,))
-    return cursor.fetchall()
-
 
 def csv2dicts(csvlist):
     head = csvlist[0]
