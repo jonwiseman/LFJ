@@ -204,7 +204,11 @@ def sql_create_event(data_insert, cursor, cnx):
     :param cnx: MySQL connection for verifying changes
     :return: new event table after update
     """
-    if get_id_from_title(data_insert['title'], cursor) != -1:
+    try:
+        get_id_from_title(data_insert['title'], cursor)
+    except InvalidEventTitleError:
+        pass
+    else:
         raise ExistingEventError
 
     if int(data_insert['team_size']) <= 0:
