@@ -1,5 +1,4 @@
 import configparser
-
 import discord
 from discord.ext import commands
 import mysql.connector
@@ -8,6 +7,7 @@ from backend.lib.game_queries import GameQueries
 from backend.lib.event_queries import EventQueries
 from backend.lib.helper_commands import HelperCommands
 from backend.lib.performance_queries import PerformanceQueries
+from backend.lib.event_actions import EventActions
 
 
 def main():

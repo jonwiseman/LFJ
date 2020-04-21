@@ -81,7 +81,7 @@ def get_id_from_title(title, cursor):
     result = cursor.fetchall()
     if len(result) == 0:  # event not found
         return -1
-    return result[0][0] # return event id
+    return result[0][0]     # return event id
 
 
 def get_game_id(game_name, cursor):
