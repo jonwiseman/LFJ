@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 from backend.lib.game_queries import get_game_id
 from backend.lib.helper_commands import check_admin_status, get_id_from_name, \
-    get_id_from_title, get_game_name, AdminPermissionError, GameNotFoundError
+    get_id_from_title, get_game_name, AdminPermissionError, GameNotFoundError, check_event_exists
 from mysql.connector.errors import IntegrityError
 from backend.lib.user_queries import UserNotFoundError
 
@@ -238,7 +238,7 @@ def sql_delete_event(auth_user, event_id, cursor, cnx):
     """
     check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
 
-    if len(sql_query_event(event_id, cursor)) == 0:
+    if check_event_exists(event_id) == -1:
         raise EventNotFoundError
 
     cursor.execute('delete from event where event_id = %s', (event_id, ))  # execute deletion query

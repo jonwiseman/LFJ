@@ -84,6 +84,20 @@ def get_id_from_title(title, cursor):
     return result[0][0]     # return event id
 
 
+def check_event_exists(event_id, cursor):
+    """
+    Checks if a given event_id exists in the database
+    :param event_id: the event id to be checked
+    :param cursor: cursor object for executing query
+    :return: -1 if event does not exist, 1 if event exists
+    """
+    cursor.execute('select * from event where event_id = %s', (event_id,))
+    result = cursor.fetchall()
+    if len(result) == 0:  # event not found
+        return -1
+    return 1
+
+
 def get_game_id(game_name, cursor):
     """
     Gets a game id from game name
