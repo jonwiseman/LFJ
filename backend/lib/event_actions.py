@@ -23,7 +23,9 @@ class EventActions(commands.Cog):
             user = self.bot.get_user(payload.user_id)
 
             if payload.emoji.name == '☑' or payload.emoji.name == '🇽':
-                if check_event_exists(payload.message_id) == -1:    # If event does not exist return
+                try:
+                    check_event_exists(payload.message_id)  # check to see if event id exists in database
+                except EventNotFoundError:
                     return
 
             if payload.emoji.name == '☑':
@@ -96,7 +98,9 @@ class EventActions(commands.Cog):
         """
         if payload.user_id != self.bot.user.id and payload.channel_id == self.event_channel_id:
 
-            if check_event_exists(payload.message_id) == -1:  # If event does not exist return
+            try:
+                check_event_exists(payload.message_id)  # check to see if event id exists in database
+            except EventNotFoundError:
                 return
 
             channel = self.bot.get_channel(payload.channel_id)
@@ -116,7 +120,9 @@ class EventActions(commands.Cog):
         if payload.user_id != self.bot.user.id and payload.channel_id == self.event_channel_id:
             # user = self.bot.get_user(payload.user_id)  TODO Modify if there is a way to cancel events
 
-            if check_event_exists(payload.message_id) == -1:  # If event does not exist return
+            try:
+                check_event_exists(payload.message_id)  # check to see if event id exists in database
+            except EventNotFoundError:
                 return
 
             sql_delete_event(payload.message_id, self.cursor, self.cnx) # Delete event if user has message remove perms

@@ -84,7 +84,6 @@ class UserTestCase(unittest.TestCase):
 
         self.assertEqual(eq.sql_query_event(self.data_insert['event_id'], self.cursor),
                          [(self.data_insert['event_id'], datetime.date(2020, 4, 9), 1, 'a test event', 5)])
-
     def tearDown(self):
         self.cursor.execute('delete from event where title = %s', (self.data_insert['title'],))
         self.cnx.commit()  # commit changes to database
