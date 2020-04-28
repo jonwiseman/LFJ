@@ -99,6 +99,87 @@ class EventQueries(commands.Cog):
         """
         await ctx.send(sql_get_events(self.cursor))
 
+    # @commands.command()
+    # async def create_registration(self, ctx, event_title):
+    #     """
+    #     Register for an event
+    #     :param ctx: command parameter
+    #     :param event_title: event's title
+    #     :return: new count of event registrations
+    #     """
+    #     event_id = get_id_from_title(event_title, self.cursor)
+    #     if event_id == -1:  # Separate error checking for event (because we will need the id here)
+    #         await ctx.send("Error: the event you are attempting to register for does not exist")
+    #         return  # If no event found, return with error
+    #     try:
+    #         sql_create_registration(str(event_id), str(ctx.author), self.cursor, self.cnx)
+    #     except UserNotFoundError:
+    #         await ctx.send("Error: player not found in database")
+    #     except ExistingRegistrationError:
+    #         await ctx.send("Error: player is already registered for this event")
+    #     else:
+    #         event_channel = self.bot.get_channel(self.event_channel_id)  # Get event channel
+    #         msg = await event_channel.fetch_message(event_id)  # Get event message
+    #
+    #         team_size = sql_get_team_size(event_id, self.cursor)  # Get size of teams from event
+    #         teams = get_teams_from_embed(msg.embeds[0], team_size)  # Get teams of event
+    #
+    #         # Place player in team, if error we return
+    #         if get_team_player_count(teams[0]) <= get_team_player_count(teams[1]):
+    #             teams[0] = add_player_to_team(teams[0], str(ctx.author))    # Attempt to add player to team
+    #             if teams[0] == -1:  # Teams are full
+    #                 await ctx.send("Error: can't add user to team, teams are full")
+    #                 return
+    #         else:
+    #             teams[1] = add_player_to_team(teams[1], ctx.author) # Add player to second team
+    #
+    #         # Update teams in event channel
+    #         embed = modify_embed_message_teams(msg.embeds[0], teams)
+    #         await msg.edit(embed=embed)
+    #
+    #         await ctx.send("Successfully registered " + str(ctx.author) + " for event " + event_title + "!")
+    #
+    # @commands.command()
+    # async def delete_registration(self, ctx, event_title):
+    #     """
+    #     Cancel a registration
+    #     :param ctx: command parameter
+    #     :param event_title: title of event to cancel registration for
+    #     :return: new count of event registrations
+    #     """
+    #
+    #     event_id = get_id_from_title(event_title, self.cursor)
+    #     if event_id == -1:  # Separate error checking for event (because we will need the id here)
+    #         await ctx.send("Error: the event you are attempting to remove your registration for does not exist")
+    #         return  # If no event found, return with error
+    #
+    #     try:
+    #         sql_delete_registration(event_id, str(ctx.author), self.cursor, self.cnx)
+    #     except UserNotFoundError:
+    #         await ctx.send("Error: player not found in database")
+    #     else:
+    #         event_channel = self.bot.get_channel(self.event_channel_id)  # Get event channel
+    #         msg = await event_channel.fetch_message(event_id)  # Get event message
+    #
+    #         team_size = sql_get_team_size(event_id, self.cursor)  # Get size of teams from event
+    #         teams = get_teams_from_embed(msg.embeds[0], team_size)  # Get teams of event
+    #
+    #         # Remove player from team, if error we return
+    #         tempTeam0 = remove_player_from_team(teams[0], str(ctx.author))
+    #         tempTeam1 = remove_player_from_team(teams[1], str(ctx.author))
+    #
+    #         if tempTeam0 == -1 and tempTeam1 == -1:
+    #             await ctx.send("Error: player is not in a team")
+    #         else:
+    #             if tempTeam0 != -1:
+    #                 teams[0] = tempTeam0
+    #             else:
+    #                 teams[1] = tempTeam1
+    #         embed = modify_embed_message_teams(msg.embeds[0], teams)
+    #         await msg.edit(embed=embed)
+    #
+    #         await ctx.send("Successfully removed " + str(ctx.author) + " from event " + event_title + "!")
+
     @commands.command()
     async def sort_teams(self, ctx, event_title, sort_type):
         sort_type = sort_type.lower()
