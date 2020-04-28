@@ -6,7 +6,8 @@ import discord
 from discord.ext import commands
 from backend.lib.game_queries import get_game_id
 from backend.lib.helper_commands import check_admin_status, get_id_from_name, \
-    get_id_from_title, get_game_name, AdminPermissionError, GameNotFoundError
+    get_id_from_title, get_game_name, AdminPermissionError, GameNotFoundError, \
+    InvalidEventTitleError
 from mysql.connector.errors import IntegrityError
 from backend.lib.user_queries import UserNotFoundError
 
@@ -73,11 +74,11 @@ class EventQueries(commands.Cog):
         :param event_title: title of event
         :return: new event table or error message
         """
-
-        event_id = get_id_from_title(event_title, self.cursor)
-
         try:
+            event_id = get_id_from_title(event_title, self.cursor)
             sql_delete_event(str(ctx.author), event_id, self.cursor, self.cnx)
+        except InvalidEventTitleError:
+            await ctx.send("No event with the title: %s" % event_title)
         except AdminPermissionError:
             await ctx.send("Permission error: only admins may delete events")
         except EventNotFoundError:
@@ -203,7 +204,11 @@ def sql_create_event(data_insert, cursor, cnx):
     :param cnx: MySQL connection for verifying changes
     :return: new event table after update
     """
-    if get_id_from_title(data_insert['title'], cursor) != -1:
+    try:
+        get_id_from_title(data_insert['title'], cursor)
+    except InvalidEventTitleError:
+        pass
+    else:
         raise ExistingEventError
 
     if int(data_insert['team_size']) <= 0:
@@ -236,6 +241,7 @@ def sql_delete_event(auth_user, event_id, cursor, cnx):
     :param cnx: connection object for verifying change
     :return: new event table after deletion
     """
+
     check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
 
     if len(sql_query_event(event_id, cursor)) == 0:
