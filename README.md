@@ -127,23 +127,24 @@ These are queries that allow interaction with the event and registration tables:
 11. delete_event
 12. get_events
 13. query_event
+14. sort_teams
 
 **Membership Queries**  
 These are queries that allow interaction with the membership table:
 
-14. create_membership
-15. delete_membership
+15. create_membership
+16. delete_membership
 
 **Performance Queries**  
 These are commands that allow the input of game statistics.
 
-16. perf_template  
-17. update_perf  
+17. perf_template  
+18. update_perf  
 
 **Miscellaneous Commands**  
 
-18. help
-19. exit
+19. help
+20. exit
 
 You can specify which prefix is used to address the bot by changing the configuration file.
 
@@ -225,18 +226,18 @@ NEW_NAME: new string name of game
 **Creating a New Event**
 The create_event command can be used to create a new event, and requires three positional arguments: an event title (must be one token), an event date (formatted as MM/DD/YYYY), and a game title.  Right now, any user can create an event.  The syntax for this command is as follows:
 
-`$create_event TITLE DATE GAME`
+`$create_event EVENT_NAME DATE GAME`
 
-TITLE: event's title
+EVENT_NAME: event's title
 DATE: event's date (formatted MM/DD/YYYY)
 GAME: game's title (must match what is in the database)
 
 **Deleting an Event**
 The delete_event command delete's an event from the LFJ database; it requires one positional argument: event title (must be one token).  Only an admin user can delete an event.  The syntax for this command is as follows:
 
-`$delete_event TITLE`
+`$delete_event EVENT_NAME`
 
-TITLE: event's title
+EVENT_NAME: event's title
 
 **See all Events**
 The get_events command returns all events in the LFJ database; it does not require any positional arguments.  The syntax for this command is as follows:
@@ -246,23 +247,17 @@ The get_events command returns all events in the LFJ database; it does not requi
 **Getting Information about an Event**
 The query_event command returns information about a specific event.  The syntax for this command is as follows:
 
-`$query_event TITLE`
+`$query_event EVENT_NAME`
 
-TITLE: event's title
+EVENT_NAME: event's title
 
-**Registering for an Event**
-The create_registration command registers a user for an event.  The syntax for this command is as follows:
+**Sorting Event Teams**
+The sort_teams command sorts the teams of a given event.  The syntax for this command is as follows:
 
-`$create_registration TITLE`
+`$sort_teams EVENT_NAME SORT_TYPE`
 
-TITLE: event's title
-
-**Cancelling a Registration**
-The delete_registration command removes a user's event registration.  The syntax for this command is as follows:
-
-`$delete_registration TITLE`
-
-TITLE: event's title
+EVENT_NAME: event's title
+SORT_TYPE: type to sort event teams by (RANDOM)
 
 **Setting a User's Game Skill**
 This command can be used to update a user's skill level for a given game. The syntax for this command is as follows:
