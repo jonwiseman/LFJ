@@ -78,7 +78,7 @@ def add_game(cursor, cnx):
     return cursor.fetchall()
 
 
-def query_table(cursor, cnx):
+def query_table(cursor):
     table_name = input("Enter table's name: ")
     if table_name == 'user':
         cursor.execute('select * from user')

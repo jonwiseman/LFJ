@@ -1,5 +1,4 @@
 import configparser
-
 import discord
 from discord.ext import commands
 import mysql.connector
@@ -7,6 +6,8 @@ from backend.lib.user_queries import UserQueries
 from backend.lib.game_queries import GameQueries
 from backend.lib.event_queries import EventQueries
 from backend.lib.helper_commands import HelperCommands
+from backend.lib.performance_queries import PerformanceQueries
+from backend.lib.event_actions import EventActions
 
 
 def main():
@@ -46,6 +47,8 @@ def main():
     client.add_cog(UserQueries(client, cursor, cnx))
     client.add_cog(GameQueries(client, cursor, cnx))
     client.add_cog(EventQueries(client, cursor, cnx, event_channel_id))
+    client.add_cog(PerformanceQueries(client, cursor, cnx))
+    client.add_cog(EventActions(client, cursor, cnx, event_channel_id))
     client.run(token)
 
 
