@@ -157,7 +157,7 @@ def sql_edit_name(auth_user, old_name, new_name, cursor, cnx):
 
     cursor.execute('update game '
                    'set name = %s '
-                   'where name = %s', (new_name, old_name))  # change the game table with new email
+                   'where name = %s', (new_name, old_name))  # change the game table with new game name
     cnx.commit()  # commit changes to user table
     cursor.execute('select * from game where name = %s', (new_name,))  # get new user table
     return cursor.fetchall()
@@ -171,7 +171,7 @@ def sql_edit_id(auth_user, name, game_id, cursor, cnx):
 
     cursor.execute('update game '
                    'set game_id = %s '
-                   'where name = %s', (game_id, name))  # change the game table with new email
+                   'where name = %s', (game_id, name))  # change the game table with game id
     cnx.commit()  # commit changes to user table
     cursor.execute('select * from game where name = %s', (name,))  # get new user table
     return cursor.fetchall()
