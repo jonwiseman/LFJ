@@ -37,100 +37,75 @@ class UserTestCase(unittest.TestCase):
 
         self.display_name = config['Testing']['display_name']
         self.id = int(config['Testing']['id'])
-        self.email = config['Testing']['email']
         self.admin = int(config['Testing']['admin'])
 
         self.new_user = "test#69420"
         self.new_id = 69420
-        self.new_user_email = "test@test.com"
-        self.new_user_admin = 0
+        self.new_user_admin = 'false'
 
     def test_add_user(self):
         with self.assertRaises(AdminPermissionError):       # non-existing user trying to add to database
-            uq.sql_add_user(self.new_user, self.new_id,
-                            self.new_user, self.new_user_email,
-                            self.new_user_admin, self.cursor, self.cnx)
+            uq.sql_add_user(self.new_id, self.new_id,
+                            self.new_user, self.new_user_admin, self.cursor, self.cnx)
 
-        self.assertEqual(uq.sql_add_user(self.display_name, self.new_id,
-                                         self.new_user, self.new_user_email,
-                                         self.new_user_admin, self.cursor, self.cnx),
-                         [(69420, 'test#69420', 'test@test.com', 0)])       # adding a new user
+        self.assertEqual(uq.sql_add_user(self.id, self.new_id,
+                                         self.new_user, self.new_user_admin, self.cursor, self.cnx),
+                         [(69420, 'test#69420', 0)])       # adding a new user
 
         with self.assertRaises(uq.ExistingUserError):       # adding an existing user
-            uq.sql_add_user(self.display_name, self.new_id,
-                            self.new_user, self.new_user_email,
-                            self.new_user_admin, self.cursor, self.cnx)
+            uq.sql_add_user(self.id, self.new_id,
+                            self.new_user, self.new_user_admin, self.cursor, self.cnx)
 
         with self.assertRaises(AdminPermissionError):       # non-admin trying to add to database
-            uq.sql_add_user(self.new_user, 42069,
-                            'another_test', 'test@test.com',
-                            0, self.cursor, self.cnx)
+            uq.sql_add_user(self.new_id, 42069, 'another_test', 0, self.cursor, self.cnx)
 
     def test_query_user(self):
-        self.assertEqual(uq.sql_query_user(self.display_name, self.cursor),
-                         [(self.id, self.display_name, self.email, self.admin)])        # querying a specific user
+        self.assertEqual(uq.sql_query_user(self.id, self.cursor),
+                         [(self.id, self.display_name, self.admin)])        # querying a specific user
         self.assertEqual(uq.sql_query_user('ALL', self.cursor),
-                         [(self.id, self.display_name, self.email, self.admin)])        # querying all users
+                         [(self.id, self.display_name, self.admin)])        # querying all users
         self.assertEqual(uq.sql_query_user('all', self.cursor),
-                         [(self.id, self.display_name, self.email, self.admin)])        # checking case sensitivity
-
-    def test_set_email(self):
-        with self.assertRaises(AdminPermissionError):       # non-existent user trying to modify database
-            uq.sql_set_admin_status(self.new_user, self.new_user, 'true', self.cursor, self.cnx)
-
-        self.assertEqual(uq.sql_add_user(self.display_name, self.new_id,
-                                         self.new_user, self.new_user_email,
-                                         self.new_user_admin, self.cursor, self.cnx),
-                         [(69420, 'test#69420', 'test@test.com', 0)])       # safe add new user
-
-        with self.assertRaises(AdminPermissionError):       # new user trying to change emails
-            uq.sql_set_email(self.new_user, self.new_user, 'new_email@test.com', self.cursor, self.cnx)
-
-        self.assertEqual(uq.sql_set_email(self.display_name, self.new_user,
-                                          'new_email@test.com', self.cursor, self.cnx),
-                         [(69420, 'test#69420', 'new_email@test.com', 0)])      # an admin is changing an email
+                         [(self.id, self.display_name, self.admin)])        # checking case sensitivity
 
     def test_set_admin_status(self):
         with self.assertRaises(AdminPermissionError):       # non-existent user trying to change database
-            uq.sql_set_admin_status(self.new_user, self.new_user, 'true', self.cursor, self.cnx)
+            uq.sql_set_admin_status(self.new_id, self.new_id, 'true', self.cursor, self.cnx)
 
-        self.assertEqual(uq.sql_add_user(self.display_name, self.new_id,
-                                         self.new_user, self.new_user_email,
+        self.assertEqual(uq.sql_add_user(self.id, self.new_id, self.new_user,
                                          self.new_user_admin, self.cursor, self.cnx),
-                         [(69420, 'test#69420', 'test@test.com', 0)])       # safe add new user
+                         [(69420, 'test#69420', 0)])       # safe add new user
 
         with self.assertRaises(AdminPermissionError):       # non-admin trying to set admin status
-            uq.sql_set_admin_status(self.new_user, self.new_user, 'true', self.cursor, self.cnx)
+            uq.sql_set_admin_status(self.new_id, self.new_id, 'true', self.cursor, self.cnx)
 
-        self.assertEqual(uq.sql_set_admin_status(self.display_name, self.new_user, 'true', self.cursor, self.cnx),
-                         [(69420, 'test#69420', 'test@test.com', 1)])       # admin updating admin status
+        self.assertEqual(uq.sql_set_admin_status(self.id, self.new_id, 'true', self.cursor, self.cnx),
+                         [(69420, 'test#69420', 1)])       # admin updating admin status
 
     def test_delete_user(self):
         with self.assertRaises(AdminPermissionError):       # non-existent user trying to change database
-            uq.sql_delete_user(self.new_user, self.display_name, self.cursor, self.cnx)
+            uq.sql_delete_user(self.new_id, self.id, self.cursor, self.cnx)
 
-        self.assertEqual(uq.sql_add_user(self.display_name, self.new_id,
-                                         self.new_user, self.new_user_email,
+        self.assertEqual(uq.sql_add_user(self.id, self.new_id, self.new_user,
                                          self.new_user_admin, self.cursor, self.cnx),
-                         [(69420, 'test#69420', 'test@test.com', 0)])       # safe add new non-admin user
+                         [(69420, 'test#69420', 0)])       # safe add new non-admin user
 
         with self.assertRaises(AdminPermissionError):       # non-admin trying to delete an admin
-            uq.sql_delete_user(self.new_user, self.display_name, self.cursor, self.cnx)
+            uq.sql_delete_user(self.new_id, self.id, self.cursor, self.cnx)
 
-        self.assertEqual(uq.sql_set_admin_status(self.display_name, self.new_user, 'true', self.cursor, self.cnx),
-                         [(69420, 'test#69420', 'test@test.com', 1)])  # safe give admin status
+        self.assertEqual(uq.sql_set_admin_status(self.id, self.new_id, 'true', self.cursor, self.cnx),
+                         [(69420, 'test#69420', 1)])  # safe give admin status
 
         with self.assertRaises(AdminPermissionError):       # admin trying to delete an admin
-            uq.sql_delete_user(self.new_user, self.display_name, self.cursor, self.cnx)
+            uq.sql_delete_user(self.new_id, self.id, self.cursor, self.cnx)
 
-        self.assertEqual(uq.sql_set_admin_status(self.display_name, self.new_user, 'false', self.cursor, self.cnx),
-                         [(69420, 'test#69420', 'test@test.com', 0)])  # safe remove admin status
+        self.assertEqual(uq.sql_set_admin_status(self.id, self.new_id, 'false', self.cursor, self.cnx),
+                         [(69420, 'test#69420', 0)])  # safe remove admin status
 
-        self.assertEqual(uq.sql_delete_user(self.display_name, self.new_user, self.cursor, self.cnx),
-                         [(self.id, self.display_name, self.email, self.admin)])
+        self.assertEqual(uq.sql_delete_user(self.id, self.new_id, self.cursor, self.cnx),
+                         [(self.id, self.display_name, self.admin)])
 
     def tearDown(self):
-        self.cursor.execute('delete from user where display_name = %s', (self.new_user,))  # execute deletion query
+        self.cursor.execute('delete from user where user_id = %s', (self.new_id,))  # execute deletion query
         self.cnx.commit()  # commit changes to database
         self.cnx.close()
         self.cursor.close()

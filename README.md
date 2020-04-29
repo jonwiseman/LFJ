@@ -109,42 +109,41 @@ These are queries that allow interaction with the user table:
 1. add_user
 2. delete_user
 3. query_user
-4. set_email
-5. set_admin
+4. set_admin
 
 **Game Queries**  
 These are queries that allow interaction with the game table:
 
-6. add_game
-7. delete_game
-8. query_game
-9. set_game_name
+5. add_game
+6. delete_game
+7. query_game
+8. set_game_name
 
 **Event Queries**  
 These are queries that allow interaction with the event and registration tables:
 
-10. create_event
-11. delete_event
-12. get_events
-13. query_event
-14. sort_teams
+9. create_event
+10. delete_event
+11. get_events
+12. query_event
+13. sort_teams
 
 **Membership Queries**  
 These are queries that allow interaction with the membership table:
 
-15. create_membership
-16. delete_membership
+14. create_membership
+15. delete_membership
 
 **Performance Queries**  
 These are commands that allow the input of game statistics.
 
-17. perf_template  
-18. update_perf  
+16. perf_template  
+17. update_perf  
 
 **Miscellaneous Commands**  
 
-19. help
-20. exit
+18. help
+19. exit
 
 You can specify which prefix is used to address the bot by changing the configuration file.
 
@@ -153,36 +152,27 @@ You can specify which prefix is used to address the bot by changing the configur
 **Adding a new user**
 The add_user command can be used to add a new user to LFJ's database.  This is the first step necessary for a user to be able to register in game groups and for events.  Please note that the adding user MUST be an admin.  The syntax for this command is as follows:
 
-`$add_user DISPLAY_NAME EMAIL ADMIN`
+`$add_user USER_ID ADMIN`
 
-DISPLAY_NAME: the user's Discord display name (mine is jon_wiseman#8494)
-EMAIL: the user's email
-ADMIN: the user's admin status (0 or 1).  Please note that a user with admin status 1 cannot be deleted via LFJ later
+USER_ID: the user's Discord id (mine is 480122056114044939)
+ADMIN: the user's admin status [TRUE|FALSE].  Please note that a user with admin status TRUE cannot be deleted via LFJ later
 
 **Deleting a User**
 The delete_user command can be used to delete a user from LFJ's database.  Please note that the user doing the deleting MUST be an admin, and that an admin cannot be deleted from the database.  The syntax for this command is as follows:
 
-`$delete_user DISPLAY_NAME`
+`$delete_user USER_ID`
 
-DISPLAY_NAME: the user's Discord display name
+USER_ID: the user's Discord id
 
 **Querying for a User**
-The query_user command requires one of two additional arguments: either ALL or a DISPLAY_NAME.  If ALL is entered, then the bot will return a list of all users in the database; if a DISPLAY_NAME is entered, then only that user's information will be returned.  The syntax for this command is as follows:
+The query_user command requires one of two additional arguments: either ALL or a USER_ID.  If ALL is entered, then the bot will return a list of all users in the database; if a USER_ID is entered, then only that user's information will be returned.  The syntax for this command is as follows:
 
-`$query_user [ALL|DISPLAY_NAME]`
-
-**Setting a User's Email**
-This command can be used to update a user's email.  Please note that only an admin can update a user's information.  The syntax for this command is as follows:
-
-`$set_email DISPLAY_NAME EMAIL`
-
-DISPLAY_NAME: Discord display name of the user whose email will be updated
-EMAIL: new email for the user
+`$query_user [ALL|USER_ID]`
 
 **Setting a User's Admin Status**
 This command can be used to update a user's admin status. Please not that only an admin can update another user's admin status. The syntax for this command is as follows:
 
-`$set_admin DISPLAY_NAME [TRUE|FALSE]`
+`$set_admin USER_ID [TRUE|FALSE]`
 
 **Adding a new Game**
 The add_game command can be used to add a new game to the bot's backend.  Please note that the requesting user must be an administrator to successfully add a new game.  The syntax for this command is as follows:

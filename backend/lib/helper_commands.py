@@ -21,21 +21,21 @@ class HelperCommands(commands.Cog):
 # HELPER FUNCTIONS #
 
 
-def check_admin_status(display_name, add, cursor):
+def check_admin_status(user_id, add, cursor):
     """
     Check to see if a given user is an admin.  Only admins can change the database.
-    :param display_name: display name of requesting user
+    :param user_id: id of requesting user
     :param add: True if adding to database, False if deleting from database
     :param cursor: cursor object for executing search query
     :return: Raise AdminPermissionError if user is not admin or does not exist,Nothing if the user is an admin
     """
-    cursor.execute('select admin from user where display_name = %s', (display_name,))
+    cursor.execute('select admin from user where user_id = %s', (user_id,))
     result = cursor.fetchall()
 
     if add and (len(result) == 0 or result[0][0] == 0):  # adding to the database
-        raise AdminPermissionError(display_name)
+        raise AdminPermissionError(user_id)
     elif not add and (len(result) > 0 and result[0][0] == 1):  # removing from the database
-        raise AdminPermissionError(display_name)
+        raise AdminPermissionError(user_id)
 
 
 def get_id_from_name(display_name, cursor):
@@ -171,8 +171,8 @@ class Error(Exception):
 class AdminPermissionError(Error):
     """Invalid permission to modify database."""
 
-    def __init__(self, display_name):
-        self.display_name = display_name
+    def __init__(self, user_id):
+        self.user_id = user_id
 
 
 class GameNotFoundError(Error):
