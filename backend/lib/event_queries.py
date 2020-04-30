@@ -79,7 +79,7 @@ class EventQueries(commands.Cog):
 
         try:
             event_id = get_id_from_title(event_title, self.cursor)
-            sql_delete_event(str(ctx.author), event_id, self.cursor, self.cnx)
+            sql_delete_event(ctx.author.id, event_id, self.cursor, self.cnx)
         except AdminPermissionError:
             await ctx.send("Permission error: only admins may delete events")
         except InvalidEventTitleError:
