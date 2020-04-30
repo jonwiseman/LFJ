@@ -21,21 +21,21 @@ class HelperCommands(commands.Cog):
 # HELPER FUNCTIONS #
 
 
-def check_admin_status(display_name, add, cursor):
+def check_admin_status(user_id, add, cursor):
     """
     Check to see if a given user is an admin.  Only admins can change the database.
-    :param display_name: display name of requesting user
+    :param user_id: id of requesting user
     :param add: True if adding to database, False if deleting from database
     :param cursor: cursor object for executing search query
     :return: Raise AdminPermissionError if user is not admin or does not exist,Nothing if the user is an admin
     """
-    cursor.execute('select admin from user where display_name = %s', (display_name,))
+    cursor.execute('select admin from user where user_id = %s', (user_id,))
     result = cursor.fetchall()
 
     if add and (len(result) == 0 or result[0][0] == 0):  # adding to the database
-        raise AdminPermissionError(display_name)
+        raise AdminPermissionError(user_id)
     elif not add and (len(result) > 0 and result[0][0] == 1):  # removing from the database
-        raise AdminPermissionError(display_name)
+        raise AdminPermissionError(user_id)
 
 
 def get_id_from_name(display_name, cursor):
@@ -70,6 +70,20 @@ def get_name_from_id(user_id, cursor):
     return result[0][0]  # return display name
 
 
+def check_user_exists(user_id, cursor):
+    """
+    Checks if a given user_id exists in the database
+    :param user_id: the event id to be checked
+    :param cursor: cursor object for executing query
+    :return: -1 if event does not exist, 1 if event exists
+    """
+    cursor.execute('select * from user where user_id = %s', (user_id,))
+    result = cursor.fetchall()
+    if len(result) == 0:  # user not found
+        return -1
+    return 1
+
+
 def get_id_from_title(title, cursor):
     """
     Gets an event id from title of event
@@ -83,6 +97,20 @@ def get_id_from_title(title, cursor):
     if len(result) == 0:  # event not found
         raise InvalidEventTitleError
     return result[0][0]  # return event id
+
+
+def check_event_exists(event_id, cursor):
+    """
+    Checks if a given event_id exists in the database
+    :param event_id: the event id to be checked
+    :param cursor: cursor object for executing query
+    :return: -1 if event does not exist, 1 if event exists
+    """
+    cursor.execute('select * from event where event_id = %s', (event_id,))
+    result = cursor.fetchall()
+    if len(result) == 0:  # event not found
+        return -1
+    return 1
 
 
 def get_game_id(game_name, cursor):
@@ -143,8 +171,8 @@ class Error(Exception):
 class AdminPermissionError(Error):
     """Invalid permission to modify database."""
 
-    def __init__(self, display_name):
-        self.display_name = display_name
+    def __init__(self, user_id):
+        self.user_id = user_id
 
 
 class GameNotFoundError(Error):

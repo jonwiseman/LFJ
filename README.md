@@ -109,41 +109,44 @@ These are queries that allow interaction with the user table:
 1. add_user
 2. delete_user
 3. query_user
-4. set_email
-5. set_admin
+4. set_admin_status
 
 **Game Queries**  
 These are queries that allow interaction with the game table:
 
-6. add_game
-7. delete_game
-8. query_game
-9. set_game_name
+5. add_game
+6. delete_game
+7. query_game
+8. edit_id
+9. edit_name
+10. list_games
 
 **Event Queries**  
 These are queries that allow interaction with the event and registration tables:
 
-10. create_event
-11. delete_event
-12. get_events
-13. query_event
+11. create_event
+12. delete_event
+13. get_events
+14. query_event
+15. sort_teams
 
 **Membership Queries**  
 These are queries that allow interaction with the membership table:
 
-14. create_membership
-15. delete_membership
+16. create_membership
+17. delete_membership
+18. set_skill
 
 **Performance Queries**  
 These are commands that allow the input of game statistics.
 
-16. perf_template  
-17. update_perf  
+19. perf_template  
+20. perf_update
 
 **Miscellaneous Commands**  
 
-18. help
-19. exit
+21. help
+22. exit
 
 You can specify which prefix is used to address the bot by changing the configuration file.
 
@@ -152,36 +155,27 @@ You can specify which prefix is used to address the bot by changing the configur
 **Adding a new user**
 The add_user command can be used to add a new user to LFJ's database.  This is the first step necessary for a user to be able to register in game groups and for events.  Please note that the adding user MUST be an admin.  The syntax for this command is as follows:
 
-`$add_user DISPLAY_NAME EMAIL ADMIN`
+`$add_user USER_ID ADMIN`
 
-DISPLAY_NAME: the user's Discord display name (mine is jon_wiseman#8494)
-EMAIL: the user's email
-ADMIN: the user's admin status (0 or 1).  Please note that a user with admin status 1 cannot be deleted via LFJ later
+USER_ID: the user's Discord id (mine is 480122056114044939)
+ADMIN: the user's admin status [TRUE|FALSE].  Please note that a user with admin status TRUE cannot be deleted via LFJ later
 
 **Deleting a User**
 The delete_user command can be used to delete a user from LFJ's database.  Please note that the user doing the deleting MUST be an admin, and that an admin cannot be deleted from the database.  The syntax for this command is as follows:
 
-`$delete_user DISPLAY_NAME`
+`$delete_user USER_ID`
 
-DISPLAY_NAME: the user's Discord display name
+USER_ID: the user's Discord id
 
 **Querying for a User**
-The query_user command requires one of two additional arguments: either ALL or a DISPLAY_NAME.  If ALL is entered, then the bot will return a list of all users in the database; if a DISPLAY_NAME is entered, then only that user's information will be returned.  The syntax for this command is as follows:
+The query_user command requires one of two additional arguments: either ALL or a USER_ID.  If ALL is entered, then the bot will return a list of all users in the database; if a USER_ID is entered, then only that user's information will be returned.  The syntax for this command is as follows:
 
-`$query_user [ALL|DISPLAY_NAME]`
-
-**Setting a User's Email**
-This command can be used to update a user's email.  Please note that only an admin can update a user's information.  The syntax for this command is as follows:
-
-`$set_email DISPLAY_NAME EMAIL`
-
-DISPLAY_NAME: Discord display name of the user whose email will be updated
-EMAIL: new email for the user
+`$query_user [ALL|USER_ID]`
 
 **Setting a User's Admin Status**
 This command can be used to update a user's admin status. Please not that only an admin can update another user's admin status. The syntax for this command is as follows:
 
-`$set_admin DISPLAY_NAME [TRUE|FALSE]`
+`$set_admin USER_ID [TRUE|FALSE]`
 
 **Adding a new Game**
 The add_game command can be used to add a new game to the bot's backend.  Please note that the requesting user must be an administrator to successfully add a new game.  The syntax for this command is as follows:
@@ -201,42 +195,47 @@ NAME: string name of game to be deleted
 **Querying for a Game**
 The query_game command can be used to get information about one specific game or all games in the bot's database.  The syntax for this command is as follows:
 
-`$query_game [ALL/NAME]`
+`$query_game [ALL|NAME]`
 
 ALL: to query all games in the database
 NAME: name of specific game to query
 
 **Editing a Game's ID**
-The set_game_id command can be used to edit a game's numeric ID.  Please note that the requesting user must be an admin in order to successfully edit a game's information.  The syntax for this command is as follows:
+The edit_id command can be used to edit a game's numeric ID.  Please note that the requesting user must be an admin in order to successfully edit a game's information.  The syntax for this command is as follows:
 
-`$set_game_id NAME NEW_ID`
+`$edit_id NAME NEW_ID`
 
 NAME: game's string name for identification
 NEW_ID: new numeric ID of game
 
 **Editing a Game's Name**
-The set_game_name command can be used to edit a game's name.  Please note that the requesting user must be an admin in order to successfully edit a game's information.  The syntax for this command is as follows:
+The edit_name command can be used to edit a game's name.  Please note that the requesting user must be an admin in order to successfully edit a game's information.  The syntax for this command is as follows:
 
-`$set_game_name OLD_NAME NEW_NAME`
+`$edit_name OLD_NAME NEW_NAME`
 
 OLD_NAME: old string name of game
 NEW_NAME: new string name of game
 
+**Editing a Game's ID**
+The list_games command is an alias to query_game ALL
+
+`$list_games`
+
 **Creating a New Event**
 The create_event command can be used to create a new event, and requires three positional arguments: an event title (must be one token), an event date (formatted as MM/DD/YYYY), and a game title.  Right now, any user can create an event.  The syntax for this command is as follows:
 
-`$create_event TITLE DATE GAME`
+`$create_event EVENT_NAME DATE GAME`
 
-TITLE: event's title
+EVENT_NAME: event's title
 DATE: event's date (formatted MM/DD/YYYY)
 GAME: game's title (must match what is in the database)
 
 **Deleting an Event**
 The delete_event command delete's an event from the LFJ database; it requires one positional argument: event title (must be one token).  Only an admin user can delete an event.  The syntax for this command is as follows:
 
-`$delete_event TITLE`
+`$delete_event EVENT_NAME`
 
-TITLE: event's title
+EVENT_NAME: event's title
 
 **See all Events**
 The get_events command returns all events in the LFJ database; it does not require any positional arguments.  The syntax for this command is as follows:
@@ -246,23 +245,34 @@ The get_events command returns all events in the LFJ database; it does not requi
 **Getting Information about an Event**
 The query_event command returns information about a specific event.  The syntax for this command is as follows:
 
-`$query_event TITLE`
+`$query_event ALL|TITLE`
 
+ALL: to query all events in the database
 TITLE: event's title
 
-**Registering for an Event**
-The create_registration command registers a user for an event.  The syntax for this command is as follows:
+**Sorting Event Teams**
+The sort_teams command sorts the teams of a given event.  The syntax for this command is as follows:
 
-`$create_registration TITLE`
+`$sort_teams EVENT_NAME SORT_TYPE`
 
-TITLE: event's title
+EVENT_NAME: event's title
+SORT_TYPE: type to sort event teams by (RANDOM)
 
-**Cancelling a Registration**
-The delete_registration command removes a user's event registration.  The syntax for this command is as follows:
+**Adding a game to your user profile**
+The create_membership command registers a user as a player of a game.  The syntax for this command is as follows:
 
-`$delete_registration TITLE`
+`$create_membership GAME SKILL`
 
-TITLE: event's title
+GAME: game's title (must match what is in the database)
+SKILL: user's initial ranking for game
+
+**Removing a game from your user profile**
+The delete_membership command removes as a player for a game.  The syntax for this command is as follows:
+
+`$delete_membership USER GAME`
+
+USER: name of the user to remove
+GAME: game's title (must match what is in the database)
 
 **Setting a User's Game Skill**
 This command can be used to update a user's skill level for a given game. The syntax for this command is as follows:
