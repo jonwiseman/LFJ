@@ -119,6 +119,15 @@ class EventQueries(commands.Cog):
             team_size = sql_get_team_size(event_id, self.cursor)  # Get size of teams from event
             teams = get_teams_from_embed(msg.embeds[0], team_size)  # Get teams of event
 
+            if sort_type == 'full':
+                a = [x for x in teams[0] if x != '-----']
+                b = [x for x in teams[1] if x != '-----']
+                c = a + b
+                random.shuffle(c)
+                clen = int(len(c)/2)
+                teams[0] = c[clen:]
+                teams[1] = c[:clen]
+
             if sort_type == 'random':
                 random.shuffle(teams[0])
                 random.shuffle(teams[1])
@@ -363,19 +372,10 @@ def rebase_team(team, team_size):
     :param team_size: total size of team to rebase
     :return: rebased team array
     """
-    while '-----' in team:
-        pi = team.index('-----')
-        team.pop(pi)
+    team = [x for x in team if x != '-----']
     while len(team) < team_size:
         team.append('-----')
     return team
-    """for i in range(team_size):
-        if team[i] == '-----':  # If empty player position
-            for j in range(team_size - i):  # Loop through remaining players
-                display_name = team[i + j]
-                if display_name != '-----':
-                    team = remove_player_from_team(team, team_size, display_name, 0)
-                    team[i + j - 1] = display_name"""
 
     return team
 
