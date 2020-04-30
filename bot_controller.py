@@ -1,6 +1,8 @@
 import configparser
 import discord
-from discord.ext import commands
+import asyncio
+from discord.ext import commands, tasks
+from datetime import datetime, timedelta
 import mysql.connector
 from backend.lib.user_queries import UserQueries
 from backend.lib.game_queries import GameQueries
@@ -41,6 +43,23 @@ def main():
         """
         await client.change_presence(activity=discord.Game(name='Event Management'))
         print('We have logged in as {0.user}'.format(client))
+
+    @tasks.loop(hours=24)
+    async def reminders():
+        await client.sendMessage("<@263084693824471041> Testing")
+
+    @reminders.before_loop
+    async def before_reminders():
+        hour = 3
+        minute = 7
+        await client.wait_until_ready()
+        now = datetime.now()
+        future = datetime.datetime(now.year, now.month, now.day, hour, minute)
+        if now.hour >= hour and now.minute > minute:
+            future += timedelta(days=1)
+        await asyncio.sleep((future-now).seconds)
+
+    reminders.start()
 
     # RUN THE BOT #
     client.add_cog(HelperCommands(client, cursor, cnx))
