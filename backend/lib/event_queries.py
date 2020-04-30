@@ -128,9 +128,13 @@ class EventQueries(commands.Cog):
                 teams[0] = c[clen:]
                 teams[1] = c[:clen]
 
-            if sort_type == 'random':
+            elif sort_type == 'random':
                 random.shuffle(teams[0])
                 random.shuffle(teams[1])
+
+            else:
+                await ctx.send(sort_type + " is not a valid shuffle type!")
+                return
 
             teams[0] = rebase_team(teams[0], team_size)    # Order team 0
             teams[1] = rebase_team(teams[1], team_size)    # Order team 1
@@ -376,9 +380,6 @@ def rebase_team(team, team_size):
     while len(team) < team_size:
         team.append('-----')
     return team
-
-    return team
-
 
 def add_player_to_team(team, display_name):
     """
