@@ -256,7 +256,7 @@ The sort_teams command sorts the teams of a given event.  The syntax for this co
 `$sort_teams EVENT_NAME SORT_TYPE`
 
 EVENT_NAME: event's title
-SORT_TYPE: type to sort event teams by (RANDOM)
+SORT_TYPE: type to sort event teams by (RANDOM) (FULL)
 
 **Adding a game to your user profile**
 The create_membership command registers a user as a player of a game.  The syntax for this command is as follows:
