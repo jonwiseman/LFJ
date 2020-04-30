@@ -135,7 +135,7 @@ def sql_add_user(auth_user, user_id, display_name, is_admin, cursor, cnx):
     """
     check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
 
-    if check_user_exists(user_id, cursor) == -1:
+    if check_user_exists(user_id, cursor) != -1:
         raise ExistingUserError()
 
     if not (is_admin.lower() == 'true' or is_admin.lower() == 'false'):  # check for valid response
