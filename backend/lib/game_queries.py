@@ -87,7 +87,7 @@ class GameQueries(commands.Cog):
     async def query_game(self, ctx, name):
         """
         Inspect a game
-        :param name: game's title
+        :param name: game's title | ALL
         :return: result of query
         """
         await ctx.send(sql_query_game(name, self.cursor))
@@ -189,11 +189,10 @@ def sql_list_games(cursor):
 
 def sql_query_game(argument, cursor):
     if argument.upper() == 'ALL':
-        cursor.execute('select * from game')
+        return sql_list_games(cursor)
     else:
         cursor.execute('select * from game where name = %s', (argument,))
-
-    return cursor.fetchall()
+        return cursor.fetchall()
 
 
 def sql_set_membership(auth_user, game_name, skill_level, cursor, cnx):
