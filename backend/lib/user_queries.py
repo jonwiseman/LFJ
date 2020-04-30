@@ -1,5 +1,5 @@
 from discord.ext import commands
-from backend.lib.helper_commands import check_admin_status, AdminPermissionError
+from backend.lib.helper_commands import check_admin_status, AdminPermissionError, check_user_exists
 
 
 class UserQueries(commands.Cog):
@@ -96,7 +96,7 @@ def sql_query_user(argument, cursor):
     if not isinstance(argument, int) and argument.upper() == 'ALL':
         cursor.execute('select * from user')
     else:
-        cursor.execute('select * from user where user_id = %s', (argument,))
+        cursor.execute('select * from user where display_name = %s', (argument,))
 
     return cursor.fetchall()
 
@@ -113,7 +113,7 @@ def sql_delete_user(auth_user, user_id, cursor, cnx):
     check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
     check_admin_status(user_id, False, cursor)  # see if the user to be deleted is an admin
 
-    if len(sql_query_user(user_id, cursor)) == 0:
+    if check_user_exists(user_id, cursor) == -1:
         raise UserNotFoundError()
 
     cursor.execute('delete from user where user_id = %s', (user_id,))  # execute deletion query
@@ -135,7 +135,7 @@ def sql_add_user(auth_user, user_id, display_name, is_admin, cursor, cnx):
     """
     check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
 
-    if len(sql_query_user(user_id, cursor)) > 0:
+    if check_user_exists(user_id, cursor) == -1:
         raise ExistingUserError()
 
     if not (is_admin.lower() == 'true' or is_admin.lower() == 'false'):  # check for valid response
@@ -162,7 +162,7 @@ def sql_set_admin_status(auth_user, user_id, new_status, cursor, cnx):
     """
     check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
 
-    if len(sql_query_user(user_id, cursor)) == 0:
+    if check_user_exists(user_id, cursor) == -1:
         raise UserNotFoundError()
 
     if not (new_status.lower() == 'true' or new_status.lower() == 'false'):  # check for valid response

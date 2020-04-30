@@ -5,6 +5,7 @@ from datetime import date
 
 import discord
 from discord.ext import commands
+
 from backend.lib.game_queries import get_game_id
 from backend.lib.helper_commands import check_admin_status, get_id_from_name, \
     get_id_from_title, get_game_name, AdminPermissionError, GameNotFoundError, check_event_exists, \
@@ -48,7 +49,7 @@ class EventQueries(commands.Cog):
 
             embed = create_embed_message(data_insert['title'], data_insert['date'],
                                          get_game_name(data_insert['game_id'], self.cursor),
-                                         teams)  # Created embeded message
+                                         teams, ctx)  # Created embeded message
         except DateFormatError:
             await ctx.send("Error: your date is invalid.  Please use MM/DD/YYYY format")
         except GameNotFoundError:
@@ -101,6 +102,13 @@ class EventQueries(commands.Cog):
 
     @commands.command()
     async def sort_teams(self, ctx, event_title, sort_type):
+        """
+        Sorts event teams with given sort type
+        :param ctx:
+        :param event_title: title of event to sort
+        :param sort_type: type of sort to use
+        :return: void
+        """
         sort_type = sort_type.lower()
         try:
             event_id = get_id_from_title(event_title, self.cursor)
@@ -290,21 +298,23 @@ def sql_query_event(event_id, cursor):
 # TEAMS AND EMBEDED MESSAGES #
 
 
-def create_embed_message(title, game_date, game_name, teams):
+def create_embed_message(title, game_date, game_name, teams, ctx):
     """
     Creates an embeded message to send in Discord
     :param title: game title from event
     :param game_date: game date from event
     :param game_name: game name from event (convert from game_id first)
     :param teams: teams for event
+    :param ctx: ctx for mess
     :return: embeded message ready to be sent in Discord containing event details
     """
+
     embed = discord.Embed(title="--------------------------------------------------\n" +
                                 "Title: " + title + "\n" +
                                 "Date: " + game_date.strftime('%m/%d/%y') + "\n" +
                                 "Game: " + game_name + "\n" +
                                 "--------------------------------------------------",
-                          description="", color=0x0e4d98)
+                          description="`Use reactions to join or leave the event`", color=0x0e4d98)
     embed.add_field(name="Team 1", value=convert_team_to_text(teams[0]), inline=True)
     embed.add_field(name="Team 2", value=convert_team_to_text(teams[1]), inline=True)
 

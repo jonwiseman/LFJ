@@ -60,7 +60,7 @@ class UserTestCase(unittest.TestCase):
             uq.sql_add_user(self.new_id, 42069, 'another_test', 0, self.cursor, self.cnx)
 
     def test_query_user(self):
-        self.assertEqual(uq.sql_query_user(self.id, self.cursor),
+        self.assertEqual(uq.sql_query_user(self.display_name, self.cursor),
                          [(self.id, self.display_name, self.admin)])        # querying a specific user
         self.assertEqual(uq.sql_query_user('ALL', self.cursor),
                          [(self.id, self.display_name, self.admin)])        # querying all users
