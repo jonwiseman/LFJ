@@ -23,9 +23,8 @@ USE `LFJ` ;
 DROP TABLE IF EXISTS `LFJ`.`user` ;
 
 CREATE TABLE IF NOT EXISTS `LFJ`.`user` (
-  `user_id` INT NOT NULL,
+  `user_id` BIGINT(20) NOT NULL,
   `display_name` VARCHAR(45) NOT NULL,
-  `e_mail` VARCHAR(45) NULL,
   `admin` INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`user_id`))
 ENGINE = InnoDB;
@@ -64,7 +63,7 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `LFJ`.`membership` ;
 
 CREATE TABLE IF NOT EXISTS `LFJ`.`membership` (
-  `user_id` INT NOT NULL,
+  `user_id` BIGINT(20) NOT NULL,
   `game_id` INT NOT NULL,
   `skill_level` INT NOT NULL,
   PRIMARY KEY (`user_id`, `game_id`))
@@ -77,7 +76,7 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `LFJ`.`registration` ;
 
 CREATE TABLE IF NOT EXISTS `LFJ`.`registration` (
-  `user_id` INT NOT NULL,
+  `user_id` BIGINT(20) NOT NULL,
   `event_id` BIGINT(20) NOT NULL,
   `date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`, `event_id`))
@@ -90,7 +89,7 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `LFJ`.`performance` ;
 
 CREATE TABLE IF NOT EXISTS `LFJ`.`performance` (
-  `user_id` INT NOT NULL,
+  `user_id` BIGINT(20) NOT NULL,
   `event_id` BIGINT(20) NOT NULL,
   `kills` INT NOT NULL,
   `deaths` INT NOT NULL,
@@ -111,7 +110,7 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 -- -----------------------------------------------------
 START TRANSACTION;
 USE `LFJ`;
-INSERT INTO `LFJ`.`user` (`user_id`, `display_name`, `e_mail`, `admin`) VALUES (8494, 'jon_wiseman#8494', 'wisemanj@etown.edu', 1);
+INSERT INTO `LFJ`.`user` (`user_id`, `display_name`, `e_mail`, `admin`) VALUES (480122056114044939, 'jon_wiseman#8494', 'wisemanj@etown.edu', 1);
 
 COMMIT;
 

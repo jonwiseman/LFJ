@@ -1,7 +1,8 @@
 from discord.ext import commands
 from backend.lib.event_queries import sql_create_registration, get_team_player_count, sql_get_team_size, \
     get_teams_from_embed, add_player_to_team, modify_embed_message_teams, sql_delete_registration, \
-    remove_player_from_team, ExistingRegistrationError
+    remove_player_from_team, ExistingRegistrationError, EventNotFoundError, sql_delete_all_registrations
+from backend.lib.helper_commands import check_event_exists, check_user_exists
 from backend.lib.user_queries import UserNotFoundError
 from discord.errors import Forbidden
 
@@ -20,6 +21,16 @@ class EventActions(commands.Cog):
             channel = self.bot.get_channel(payload.channel_id)
             msg = await channel.fetch_message(payload.message_id)
             user = self.bot.get_user(payload.user_id)
+
+            if payload.emoji.name == '☑' or payload.emoji.name == '🇽':
+                if check_event_exists(payload.message_id, self.cursor) == -1:    # If event does not exist return
+                    return
+
+            if check_event_exists(payload.message_id, self.cursor) == -1:  # If event does not exist return
+                return
+
+            #if check_user_exists(payload.user_id, self.cursor) == -1: # If user does not exist return
+            #return
 
             if payload.emoji.name == '☑':
                 try:
@@ -63,8 +74,8 @@ class EventActions(commands.Cog):
                     teams = get_teams_from_embed(msg.embeds[0], team_size)  # Get teams of event
 
                     # Remove player from team, if error we return
-                    tempTeam0 = remove_player_from_team(teams[0], str(user))
-                    tempTeam1 = remove_player_from_team(teams[1], str(user))
+                    tempTeam0 = remove_player_from_team(teams[0], team_size, str(user), 1)
+                    tempTeam1 = remove_player_from_team(teams[1], team_size, str(user), 1)
 
                     if tempTeam0 == -1 and tempTeam1 == -1:
                         # Do nothing here
@@ -81,3 +92,48 @@ class EventActions(commands.Cog):
                 await msg.remove_reaction(payload.emoji, user)
             except Forbidden:
                 pass
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_clear(self, payload):
+        """
+        Event to handle reaction clearing from event messages
+        :param payload: contains event variables
+        :return: void
+        """
+        if check_event_exists(payload.message_id, self.cursor) == -1:  # If event does not exist return
+            return
+
+        channel = self.bot.get_channel(payload.channel_id)
+        msg = await channel.fetch_message(payload.message_id)
+
+        # Add reactions back to event message
+        await msg.add_reaction('☑')  # Add accept emoji to message
+        await msg.add_reaction('🇽')  # Add decline emoji to message
+
+    @commands.Cog.listener()
+    async def on_raw_message_delete(self, payload):
+        """
+        Event to handle event message deletion
+        :param payload: contains event variables
+        :return: void
+        """
+        if check_event_exists(payload.message_id, self.cursor) == -1:  # If event does not exist return
+            return
+
+        sql_delete_event(payload.message_id, self.cursor, self.cnx)  # Delete event if user has message remove perms
+
+
+def sql_delete_event(event_id, cursor, cnx):
+    """
+    Deletes an event from the database, bypassing permissions because there is no way
+    to cancel events from occurring at this point in time
+    :param event_id: event id of the event being deleted
+    :param cursor: cursor object for executing command
+    :param cnx: connection object for committing database change
+    :return: void
+    """
+
+    cursor.execute('delete from event where event_id = %s', (event_id, ))  # execute deletion query
+    cnx.commit()  # commit changes to database
+
+    sql_delete_all_registrations(event_id, cursor, cnx)
