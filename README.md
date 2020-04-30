@@ -175,7 +175,7 @@ The query_user command requires one of two additional arguments: either ALL or a
 **Setting a User's Admin Status**
 This command can be used to update a user's admin status. Please not that only an admin can update another user's admin status. The syntax for this command is as follows:
 
-`$set_admin USER_ID [TRUE|FALSE]`
+`$set_admin_status USER_ID [TRUE|FALSE]`
 
 **Adding a new Game**
 The add_game command can be used to add a new game to the bot's backend.  Please note that the requesting user must be an administrator to successfully add a new game.  The syntax for this command is as follows:
