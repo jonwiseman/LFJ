@@ -363,14 +363,19 @@ def rebase_team(team, team_size):
     :param team_size: total size of team to rebase
     :return: rebased team array
     """
-
-    for i in range(team_size):
+    team = list(set(team))
+    pi = team.index('-----')
+    team.pop(pi)
+    while len(team) < team_size:
+        team.append('-----')
+    return team
+    """for i in range(team_size):
         if team[i] == '-----':  # If empty player position
             for j in range(team_size - i):  # Loop through remaining players
                 display_name = team[i + j]
                 if display_name != '-----':
                     team = remove_player_from_team(team, team_size, display_name, 0)
-                    team[i + j - 1] = display_name
+                    team[i + j - 1] = display_name"""
 
     return team
 
