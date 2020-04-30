@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 21, 2020 at 02:46 AM
+-- Generation Time: Apr 30, 2020 at 02:46 AM
 -- Server version: 10.4.8-MariaDB
 -- PHP Version: 7.1.33
 
@@ -63,7 +63,7 @@ INSERT INTO `game` (`game_id`, `name`) VALUES
 --
 
 CREATE TABLE `membership` (
-  `user_id` int(11) NOT NULL,
+  `user_id` bigint(20) NOT NULL,
   `game_id` int(11) NOT NULL,
   `skill_level` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -83,7 +83,7 @@ INSERT INTO `membership` (`user_id`, `game_id`, `skill_level`) VALUES
 --
 
 CREATE TABLE `performance` (
-  `user_id` int(11) NOT NULL,
+  `user_id` bigint(20) NOT NULL,
   `event_id` bigint(20) NOT NULL,
   `kills` int(11) NOT NULL,
   `deaths` int(11) NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE `performance` (
 --
 
 CREATE TABLE `registration` (
-  `user_id` int(11) NOT NULL,
+  `user_id` bigint(20) NOT NULL,
   `event_id` bigint(20) NOT NULL,
   `date` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -112,9 +112,8 @@ CREATE TABLE `registration` (
 --
 
 CREATE TABLE `user` (
-  `user_id` int(11) NOT NULL,
+  `user_id` bigint(20) NOT NULL,
   `display_name` varchar(45) NOT NULL,
-  `e_mail` varchar(45) DEFAULT NULL,
   `admin` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -122,8 +121,8 @@ CREATE TABLE `user` (
 -- Dumping data for table `user`
 --
 
-INSERT INTO `user` (`user_id`, `display_name`, `e_mail`, `admin`) VALUES
-(8494, 'jon_wiseman#8494', 'wisemanj@etown.edu', 1);
+INSERT INTO `user` (`user_id`, `display_name`, `admin`) VALUES
+(480122056114044939, 'jon_wiseman#8494',  1);
 
 --
 -- Indexes for dumped tables
