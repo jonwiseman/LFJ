@@ -56,6 +56,7 @@ To maintain data security (such as database usernames and passwords, and the bot
 [Discord]  
 token =   
 event_channel_id =   
+reminder_channel_id =   
 prefix =
 
 [Database]  

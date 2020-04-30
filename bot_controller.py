@@ -18,6 +18,7 @@ def main():
 
     token = config['Discord']['token']      # get the bot's unique token for sign-in
     event_channel_id = int(config['Discord']['event_channel_id'])     # id of the event channel
+    reminder_channel_id = int(config['Discord']['reminder_channel_id'])     # id of the reminder channel
     command_prefix = config['Discord']['prefix']
 
     username = config['Database']['username']       # get details for signing in to database
@@ -45,29 +46,25 @@ def main():
         print('We have logged in as {0.user}'.format(client))
 
     async def sendreminders():
-        remchan = client.get_channel(705314405340020827)
+        remchan = client.get_channel(reminder_channel_id)
         command = 'select registration.user_id, game.name, event.title, DATE_FORMAT(event.date,"%M %d %Y")' \
                   ' from event inner join game on event.game_id = game.game_id'\
                   ' inner join registration on registration.event_id = event.event_id '\
-                  ' where event.date > CURDATE() and event.date <= CURDATE()+1'
+                  ' where event.date > CURDATE() and event.date <= DATE_ADD(CURDATE(),INTERVAL 1 DAY)'
         cursor.execute(command)
         for line in cursor.fetchall():
-            message = "Reminding <@"+line[0]+"> you are registered to play "+line[1]+" in "+line[2]+" on "+line[3]
+            message = "Reminding <@%d> you are registered to play %s in '%s' on %s " % (line[0], line[1], line[2], line[3])
             await remchan.send(message)
 
     async def remindertask():
-        hour = 4
-        minute = 44
+        hour = 23
+        minute = 58
         await client.wait_until_ready()
         while not client.is_closed():
             now = datetime.now()
             future = datetime(now.year, now.month, now.day, hour, minute)
             if now.hour >= hour and now.minute > minute:
                 future += timedelta(days=1)
-
-            remchan = client.get_channel(705314405340020827)
-            message = "Reminding <@263084693824471041> in " + (future - now).seconds
-            await remchan.send(message)
             await asyncio.sleep((future - now).seconds)
             await sendreminders()
 
