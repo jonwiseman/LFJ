@@ -93,7 +93,7 @@ class EventQueries(commands.Cog):
             await ctx.send("Successfully deleted event " + event_title + "!")
 
     @commands.command()
-    async def get_events(self, ctx, past=True):
+    async def get_events(self, ctx, past=False):
         """
         Get all events
         :return: list of all scheduled events
@@ -211,7 +211,7 @@ def sql_delete_event(auth_user, event_id, cursor, cnx):
     return cursor.fetchall()
 
 
-def sql_get_events(cursor, include_past = True):
+def sql_get_events(cursor, include_past = False):
     """
     Get all events in the event table
     :param cursor: MySQL cursor object for executing command and fetching results
