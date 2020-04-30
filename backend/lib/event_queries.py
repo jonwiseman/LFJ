@@ -211,7 +211,7 @@ def sql_get_events(cursor, include_past = True):
     command =  'select event_id, DATE_FORMAT(event.date,"%M %d %Y"), event.title, '\
                'game.name from event inner join game on event.game_id = game.game_id'
     if not include_past:
-        command += 'where event.date >= CURDATE()'
+        command += ' where event.date >= CURDATE()'
     cursor.execute(command)
     event_list = '\n'.join(['\t'.join([str(e) for e in lne]) for lne in cursor.fetchall()])
     return 'Event ID\tDate\tEvent Title\tGame\n' + event_list
