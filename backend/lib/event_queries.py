@@ -363,9 +363,9 @@ def rebase_team(team, team_size):
     :param team_size: total size of team to rebase
     :return: rebased team array
     """
-    team = list(set(team))
-    pi = team.index('-----')
-    team.pop(pi)
+    while '-----' in team:
+        pi = team.index('-----')
+        team.pop(pi)
     while len(team) < team_size:
         team.append('-----')
     return team
