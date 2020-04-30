@@ -240,14 +240,17 @@ EVENT_NAME: event's title
 **See all Events**
 The get_events command returns all events in the LFJ database; it does not require any positional arguments.  The syntax for this command is as follows:
 
-`$get_events`
+`$get_events {}`
+
+{}: Optional Argument of 1 will show events from past
 
 **Getting Information about an Event**
 The query_event command returns information about a specific event.  The syntax for this command is as follows:
 
-`$query_event ALL|TITLE`
+`$query_event PAST|ALL|TITLE`
 
-ALL: to query all events in the database
+PAST: all events including past
+ALL: to query all future events in the database
 TITLE: event's title
 
 **Sorting Event Teams**
