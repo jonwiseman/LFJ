@@ -361,15 +361,13 @@ def rebase_team(team, team_size):
     :return: rebased team array
     """
 
-    count = 0
-    for player in team:
-        if player == '-----':   # If empty player position
-            for i in range(team_size - count):  # Loop through remaining players
-                display_name = team[i + count]
+    for i in range(team_size):
+        if team[i] == '-----':  # If empty player position
+            for j in range(team_size - i):  # Loop through remaining players
+                display_name = team[i + j]
                 if display_name != '-----':
-                    remove_player_from_team(team, team_size, display_name, 0)
-                    team[count] = display_name
-        count += 1
+                    team = remove_player_from_team(team, team_size, display_name, 0)
+                    team[i + j - 1] = display_name
 
     return team
 
@@ -398,12 +396,12 @@ def remove_player_from_team(team, team_size, display_name, rebase):
         :param team_size: total size of team
         :param display_name: display name of player to be removed from a team
         :param rebase: 1 if we want to rebase teams after removing player, 0 if we don't
-        :return: team array if successful, -1 if unsuccessful (player not in team)
+        :return: team array
         """
     count = 0
     for player in team:
         if player == display_name:
-            team[count] = '-----'   #TODO Rebase teams here
+            team[count] = '-----'
 
             if rebase == 1:
                 return rebase_team(team, team_size)
@@ -411,7 +409,7 @@ def remove_player_from_team(team, team_size, display_name, rebase):
             return team
         count += 1
 
-    return -1
+    return team
 
 
 def is_player_on_team(team, display_name):
