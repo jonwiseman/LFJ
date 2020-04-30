@@ -290,9 +290,16 @@ def sql_get_team_size(event_id, cursor):
     return result[0][0]  # return event id
 
 
-def sql_query_event(event_id, cursor):
-    cursor.execute('select * from event where event_id = %s', (event_id,))
-    return cursor.fetchall()
+def sql_query_event(event_title, cursor):
+    if event_title == "ALL":
+        return sql_get_events(cursor)
+    try:
+        event_id = get_id_from_title(event_title,cursor)
+    except InvalidEventTitleError:
+        return "Invalid Event Title"
+    else:
+        cursor.execute('select * from event where event_id = %s', (event_id,))
+        return cursor.fetchall()
 
 
 # TEAMS AND EMBEDED MESSAGES #

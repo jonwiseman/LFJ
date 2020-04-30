@@ -87,7 +87,7 @@ class GameQueries(commands.Cog):
     async def query_game(self, ctx, name):
         """
         Inspect a game
-        :param name: game's title
+        :param name: game's title | ALL
         :return: result of query
         """
         await ctx.send(sql_query_game(name, self.cursor))
@@ -157,7 +157,7 @@ def sql_edit_name(auth_user, old_name, new_name, cursor, cnx):
 
     cursor.execute('update game '
                    'set name = %s '
-                   'where name = %s', (new_name, old_name))  # change the game table with new email
+                   'where name = %s', (new_name, old_name))  # change the game table with new game name
     cnx.commit()  # commit changes to user table
     cursor.execute('select * from game where name = %s', (new_name,))  # get new user table
     return cursor.fetchall()
@@ -171,7 +171,7 @@ def sql_edit_id(auth_user, name, game_id, cursor, cnx):
 
     cursor.execute('update game '
                    'set game_id = %s '
-                   'where name = %s', (game_id, name))  # change the game table with new email
+                   'where name = %s', (game_id, name))  # change the game table with game id
     cnx.commit()  # commit changes to user table
     cursor.execute('select * from game where name = %s', (name,))  # get new user table
     return cursor.fetchall()
@@ -189,11 +189,10 @@ def sql_list_games(cursor):
 
 def sql_query_game(argument, cursor):
     if argument.upper() == 'ALL':
-        cursor.execute('select * from game')
+        return sql_list_games(cursor)
     else:
         cursor.execute('select * from game where name = %s', (argument,))
-
-    return cursor.fetchall()
+        return cursor.fetchall()
 
 
 def sql_set_membership(auth_user, game_name, skill_level, cursor, cnx):
