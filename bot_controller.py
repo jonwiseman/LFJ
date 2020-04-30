@@ -57,13 +57,17 @@ def main():
 
     async def remindertask():
         hour = 4
-        minute = 40
+        minute = 44
         await client.wait_until_ready()
         while not client.is_closed():
             now = datetime.now()
             future = datetime(now.year, now.month, now.day, hour, minute)
             if now.hour >= hour and now.minute > minute:
                 future += timedelta(days=1)
+
+            remchan = client.get_channel(705314405340020827)
+            message = "Reminding <@263084693824471041> in " + (future - now).seconds
+            await remchan.send(message)
             await asyncio.sleep((future - now).seconds)
             await sendreminders()
 
