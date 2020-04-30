@@ -29,8 +29,8 @@ class EventActions(commands.Cog):
             if check_event_exists(payload.message_id, self.cursor) == -1:  # If event does not exist return
                 return
 
-            #if check_user_exists(payload.user_id, self.cursor) == -1: # If user does not exist return
-            #return
+            if check_user_exists(payload.user_id, self.cursor) == -1: # If user does not exist return
+                return
 
             if payload.emoji.name == '☑':
                 try:
@@ -74,17 +74,9 @@ class EventActions(commands.Cog):
                     teams = get_teams_from_embed(msg.embeds[0], team_size)  # Get teams of event
 
                     # Remove player from team, if error we return
-                    tempTeam0 = remove_player_from_team(teams[0], team_size, str(user), 1)
-                    tempTeam1 = remove_player_from_team(teams[1], team_size, str(user), 1)
+                    teams[0] = remove_player_from_team(teams[0], team_size, str(user), 1)
+                    teams[1] = remove_player_from_team(teams[1], team_size, str(user), 1)
 
-                    if tempTeam0 == -1 and tempTeam1 == -1:
-                        # Do nothing here
-                        pass
-                    else:
-                        if tempTeam0 != -1:
-                            teams[0] = tempTeam0
-                        else:
-                            teams[1] = tempTeam1
                     embed = modify_embed_message_teams(msg.embeds[0], teams)
                     await msg.edit(embed=embed)
 
