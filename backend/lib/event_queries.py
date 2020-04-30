@@ -93,12 +93,12 @@ class EventQueries(commands.Cog):
             await ctx.send("Successfully deleted event " + event_title + "!")
 
     @commands.command()
-    async def get_events(self, ctx):
+    async def get_events(self, ctx, past=True):
         """
         Get all events
         :return: list of all scheduled events
         """
-        await ctx.send(sql_get_events(self.cursor))
+        await ctx.send(sql_get_events(self.cursor, past))
 
     @commands.command()
     async def sort_teams(self, ctx, event_title, sort_type):
@@ -202,16 +202,17 @@ def sql_delete_event(auth_user, event_id, cursor, cnx):
     return cursor.fetchall()
 
 
-def sql_get_events(cursor):
+def sql_get_events(cursor, include_past = True):
     """
     Get all events in the event table
     :param cursor: MySQL cursor object for executing command and fetching results
     :return: all events in the event table
     """
-    cursor.execute(
-        'select event_id, DATE_FORMAT(event.date,"%M %d %Y"), event.title, '
-        'game.name from event inner join game on event.game_id = game.game_id'
-        )
+    command =  'select event_id, DATE_FORMAT(event.date,"%M %d %Y"), event.title, '\
+               'game.name from event inner join game on event.game_id = game.game_id'
+    if not include_past:
+        command += 'where event.date >= CURDATE()'
+    cursor.execute(command)
     event_list = '\n'.join(['\t'.join([str(e) for e in lne]) for lne in cursor.fetchall()])
     return 'Event ID\tDate\tEvent Title\tGame\n' + event_list
 
@@ -293,6 +294,8 @@ def sql_get_team_size(event_id, cursor):
 def sql_query_event(event_title, cursor):
     if event_title == "ALL":
         return sql_get_events(cursor)
+    elif event_title == "FUTURE":
+        return sql_get_events(cursor, False)
     try:
         event_id = get_id_from_title(event_title,cursor)
     except InvalidEventTitleError:
