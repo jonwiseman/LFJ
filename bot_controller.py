@@ -44,22 +44,30 @@ def main():
         await client.change_presence(activity=discord.Game(name='Event Management'))
         print('We have logged in as {0.user}'.format(client))
 
-    @tasks.loop(hours=24)
-    async def reminders():
-        await client.sendMessage("<@263084693824471041> Testing")
+    async def sendreminders():
+        remchan = client.get_channel(705314405340020827)
+        command = 'select registration.user_id, game.name, event.title, DATE_FORMAT(event.date,"%M %d %Y")' \
+                  ' from event inner join game on event.game_id = game.game_id'\
+                  ' inner join registration on registration.event_id = event.event_id '\
+                  ' where event.date > CURDATE() and event.date <= CURDATE()+1'
+        cursor.execute(command)
+        for line in cursor.fetchall():
+            message = "Reminding <@"+line[0]+"> you are registered to play "+line[1]+" in "+line[2]+" on "+line[3]
+            await remchan.send(message)
 
-    @reminders.before_loop
-    async def before_reminders():
-        hour = 3
-        minute = 7
+    async def remindertask():
+        hour = 4
+        minute = 40
         await client.wait_until_ready()
-        now = datetime.now()
-        future = datetime.datetime(now.year, now.month, now.day, hour, minute)
-        if now.hour >= hour and now.minute > minute:
-            future += timedelta(days=1)
-        await asyncio.sleep((future-now).seconds)
+        while not client.is_closed():
+            now = datetime.now()
+            future = datetime(now.year, now.month, now.day, hour, minute)
+            if now.hour >= hour and now.minute > minute:
+                future += timedelta(days=1)
+            await asyncio.sleep((future - now).seconds)
+            await sendreminders()
 
-    reminders.start()
+    client.loop.create_task(remindertask())
 
     # RUN THE BOT #
     client.add_cog(HelperCommands(client, cursor, cnx))
