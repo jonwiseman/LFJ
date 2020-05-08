@@ -102,7 +102,7 @@ If these directions are confusing, [here's](https://discordpy.readthedocs.io/en/
 The bot's functionality is divided into modules: each script in the LFJ/Scripts folder controls one of the bot's functions (such as querying the user table or adding events).  To run the bot, you need only run bot_controller.py.  After the bot is running, you should see his status turn to green in Discord.  Do not interact with the bot via the command line; after the bot is started, only send it commands via Discord.  A list of commands you can use to interact with the bot are available in the [Available Commands](https://github.com/jonwiseman/LFJ#available-commands) section.
 
 ## Available Commands  
-There are nineteen commands available in LFJ right now, organized into 6 categories:
+There are twenty-two commands available in LFJ right now, organized into 6 categories:
 
 **User Queries**  
 These are queries that allow interaction with the user table:
