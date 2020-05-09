@@ -125,7 +125,7 @@ def sql_delete_user(auth_user, user_id, cursor, cnx):
 def sql_add_user(auth_user, user_id, display_name, is_admin, cursor, cnx):
     """
     Add a user to the user table.
-    :param auth_user: id of user authorizing add
+    :param auth_user: id of user authorizing add, None if performing an add_user bypass
     :param user_id: numeric id of user to add
     :param display_name: display name of user
     :param is_admin: admin status of new user
@@ -133,7 +133,8 @@ def sql_add_user(auth_user, user_id, display_name, is_admin, cursor, cnx):
     :param cnx: connection object for committing change
     :return: the new table after insertion or an error flag
     """
-    check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
+    if auth_user is not None:   # checks to see if auth_user bypass is enabled aka None for auth_user
+        check_admin_status(auth_user, True, cursor)  # see if the authorizing user is an admin
 
     if check_user_exists(user_id, cursor) != -1:
         raise ExistingUserError()
