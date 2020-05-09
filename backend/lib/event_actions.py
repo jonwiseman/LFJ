@@ -30,7 +30,7 @@ class EventActions(commands.Cog):
                 return
 
             if check_user_exists(payload.user_id, self.cursor) == -1: # If user does not exist return
-                sql_add_user(None, payload.user_id, user.name, "false", self.cursor, self.cnx)
+                sql_add_user(None, payload.user_id, str(user), "false", self.cursor, self.cnx)
 
             if payload.emoji.name == '☑':
                 try:

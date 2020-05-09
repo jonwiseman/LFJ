@@ -26,7 +26,7 @@ class UserQueries(commands.Cog):
 
         try:
             #                          auth_user, user_id, display_name, is_admin, cursor, cnx
-            message = sql_add_user(ctx.author.id, user_id, user.name + "#" + user.discriminator, admin, self.cursor, self.cnx)
+            message = sql_add_user(ctx.author.id, user_id, str(user), admin, self.cursor, self.cnx)
         except AdminPermissionError:
             await ctx.send("Permission error encountered.  Only admins can add users to the backend.")
         except ExistingUserError:
