@@ -3,7 +3,7 @@ from backend.lib.event_queries import sql_create_registration, get_team_player_c
     get_teams_from_embed, add_player_to_team, modify_embed_message_teams, sql_delete_registration, \
     remove_player_from_team, ExistingRegistrationError, EventNotFoundError, sql_delete_all_registrations
 from backend.lib.helper_commands import check_event_exists, check_user_exists
-from backend.lib.user_queries import UserNotFoundError
+from backend.lib.user_queries import UserNotFoundError, sql_add_user
 from discord.errors import Forbidden
 
 
@@ -30,7 +30,7 @@ class EventActions(commands.Cog):
                 return
 
             if check_user_exists(payload.user_id, self.cursor) == -1: # If user does not exist return
-                return
+                sql_add_user(None, payload.user_id, str(user), "false", self.cursor, self.cnx)
 
             if payload.emoji.name == '☑':
                 try:
